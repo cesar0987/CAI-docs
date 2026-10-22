@@ -1,0 +1,14 @@
+{
+  "alwaysUpdateLinks": true,
+  "newLinkFormat": "shortest",
+  "useMarkdownLinks": false,
+  "attachmentFolderPath": "90 - Adjuntos",
+  "newFileLocation": "folder",
+  "newFileFolderPath": "99 - Plantillas",
+  "showUnsupportedFiles": true,
+  "promptDelete": true,
+  "trashOption": "local",
+  "userIgnoreFilters": [
+    "00 - Inicio/00.04 Plan Maestro de Implementación.md"
+  ]
+}
