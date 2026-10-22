@@ -1,0 +1,151 @@
+# CI — Proyecto CAI
+# Ver: sistema cai/05 - Proceso de Desarrollo/05.05 Estrategia de Pruebas.md §10
+# Todos los checks son bloqueantes. Un PR que falle no se mergea.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Calidad y arquitectura
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: cai
+          POSTGRES_PASSWORD: cai
+          POSTGRES_DB: cai_testing
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:VEhJU0lTQU5URVNURklDRV9UT1RVQUxURVNUVkFMVUVfVEVTVA==
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: cai_testing
+      DB_USERNAME: cai
+      DB_PASSWORD: cai
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      SESSION_DRIVER: array
+      BCRYPT_ROUNDS: 4
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, pdo_pgsql, mbstring, intl, sodium, zip, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Crear schemas de los módulos
+        run: php artisan cai:db:reset --env=testing
+
+      - name: Verificar formato (Pint)
+        run: vendor/bin/pint --test
+
+      - name: Análisis estático (Larastan / PHPStan)
+        run: vendor/bin/phpstan analyse --memory-limit=1G
+
+      - name: Fronteras entre módulos (Deptrac)
+        run: vendor/bin/deptrac analyse --config-file=deptrac.yaml --no-progress
+
+      - name: Arch tests (reglas estructurales)
+        run: vendor/bin/pest --testsuite=Arch
+
+      - name: Tests unitarios y de funcionalidad
+        run: vendor/bin/pest --coverage --min=70
+
+  smoke:
+    name: Smoke tests (solo main)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [quality]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: cai
+          POSTGRES_PASSWORD: cai
+          POSTGRES_DB: cai_testing
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: testing
+      APP_KEY: base64:VEhJU0lTQU5URVNURklDRV9UT1RVQUxURVNUVkFMVUVfVEVTVA==
+      DB_CONNECTION: pgsql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 5432
+      DB_DATABASE: cai_testing
+      DB_USERNAME: cai
+      DB_PASSWORD: cai
+      CACHE_STORE: array
+      QUEUE_CONNECTION: sync
+      MAIL_MAILER: array
+      SESSION_DRIVER: array
+      BCRYPT_ROUNDS: 4
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: bcmath, pdo_pgsql, mbstring, intl, sodium, zip, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Crear schemas de los módulos
+        run: php artisan cai:db:reset --env=testing
+
+      - name: Smoke tests
+        run: vendor/bin/pest --testsuite=Smoke

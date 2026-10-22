@@ -55,3 +55,6 @@ Thumbs.db
 /.idea/
 /.vscode/
 /.nvim.lua
+
+# Obsidian workspace (personal por máquina/usuario)
+sistema cai/.obsidian/workspace.json
