@@ -98,6 +98,7 @@ related:
 - [[06.05 Release y Deploy]]
 - [[06.06 Procedimiento de Rollback]]
 - [[06.07 Backups y Recuperación]]
+- [[06.08 Verificacion de Restauracion]]
 
 ### `07 - Infraestructura`
 - [[07.01 Arquitectura del Servidor del Centro]]
@@ -132,7 +133,7 @@ related:
 - [[ADR-0003 Expand-Contract y Feature Flags]] · [[ADR-0004 Trunk-based con Tags SemVer]]
 - [[ADR-0005 Release por Symlink]] · [[ADR-0006 Cifrado de Notas Clínicas]]
 - [[ADR-0007 Cuentas Familiares Compartidas]] · [[ADR-0008 Stack Laravel Filament PostgreSQL]]
-- [[ADR-0009 Sin Redis en el MVP]] · [[ADR-0010 Backups Externos Cifrados]]
+- [[ADR-0009 Sin Redis en el MVP]] · [[ADR-0010 Backups Externos Cifrados]] · [[04.08 Rotacion de Claves y Envelope Encryption]] · [[06.08 Verificacion de Restauracion]]
 - [[ADR-0017 Registro y Trazabilidad de Cambios]]
 
 ### `12 - Registro de Cambios`
