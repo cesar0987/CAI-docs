@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+                "file": "11 - Decisiones ADR/ADR-0001 Monolito Modular en Paquetes.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ADR-0009 Sin Redis en el MVP"
+              "title": "ADR-0001 Monolito Modular en Paquetes"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+                "file": "11 - Decisiones ADR/ADR-0001 Monolito Modular en Paquetes.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+                "file": "11 - Decisiones ADR/ADR-0001 Monolito Modular en Paquetes.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+                "file": "11 - Decisiones ADR/ADR-0001 Monolito Modular en Paquetes.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,14 +190,32 @@
   },
   "active": "0f1ca409a3a44a95",
   "lastOpenFiles": [
+    "99 - Plantillas/Plantilla - Requisito Funcional.md",
+    "99 - Plantillas/Plantilla - Fase del Plan.md",
+    "99 - Plantillas/Plantilla - Documento.md",
+    "99 - Plantillas/Plantilla - ADR.md",
+    "08 - Plan de Trabajo/08.12 Backlog Maestro.md",
+    "11 - Decisiones ADR/ADR-0001 Monolito Modular en Paquetes.md",
+    "11 - Decisiones ADR/ADR-0002 Schema por Módulo en PostgreSQL.md",
+    "11 - Decisiones ADR/ADR-0008 Stack Laravel Filament PostgreSQL.md",
+    "03 - Modelo de Datos/03.01 Identidad, Roles y Sesiones.md",
+    "08 - Plan de Trabajo/08.04 F2 Identidad Permisos y Auditoría.md",
+    "08 - Plan de Trabajo/08.07 F5 Seguimiento Clínico.md",
+    "08 - Plan de Trabajo/08.10 F8 Reportes y Puesta en Producción.md",
+    "08 - Plan de Trabajo/08.02 F0 Cimientos del Entorno.md",
+    "12 - Registro de Cambios/12.04 Versionado de la Documentación.md",
+    "12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md",
+    "12 - Registro de Cambios/12.02 Registro de Cambios.md",
+    "12 - Registro de Cambios/12.01 Política de Cambios y Trazabilidad.md",
+    "09 - Manuales del Centro/09.01 Manual de Dirección.md",
+    "11 - Decisiones ADR/ADR-0017 Registro y Trazabilidad de Cambios.md",
+    "11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+    "05 - Proceso de Desarrollo/05.07 Gobierno del Cambio.md",
+    "12 - Registro de Cambios",
     "11 - Decisiones ADR/Índice de ADRs.md",
     "11 - Decisiones ADR/ADR-0010 Backups Externos Cifrados.md",
     "11 - Decisiones ADR/ADR-0006 Cifrado de Notas Clínicas.md",
     "11 - Decisiones ADR/ADR-0005 Release por Symlink.md",
-    "11 - Decisiones ADR/ADR-0004 Trunk-based con Tags SemVer.md",
-    "11 - Decisiones ADR/ADR-0002 Schema por Módulo en PostgreSQL.md",
-    "11 - Decisiones ADR/ADR-0001 Monolito Modular en Paquetes.md",
-    "11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
-    "05 - Proceso de Desarrollo/05.01 Flujo de Trabajo.md"
+    "11 - Decisiones ADR/ADR-0004 Trunk-based con Tags SemVer.md"
   ]
 }

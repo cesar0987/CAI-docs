@@ -39,6 +39,7 @@ related:
 | [[ADR-0008 Stack Laravel Filament PostgreSQL]] | Stack Laravel + Filament + PostgreSQL | Aceptado | Dirección | Tecnología |
 | [[ADR-0009 Sin Redis en el MVP]] | Sin Redis en el MVP | Aceptado | Responsable técnico | Infraestructura |
 | [[ADR-0010 Backups Externos Cifrados]] | Backups externos cifrados | Aceptado | Dirección | Continuidad |
+| [[ADR-0017 Registro y Trazabilidad de Cambios]] | Registro y trazabilidad de cambios | Aceptado | Responsable técnico | Proceso |
 
 ---
 
@@ -168,4 +169,7 @@ dependencia):
 | [[06.03 Expand-Contract]] | Concreta [[ADR-0003 Expand-Contract y Feature Flags]] |
 | [[06.06 Procedimiento de Rollback]] | Concreta [[ADR-0005 Release por Symlink]] |
 | [[10.04 Recuperación ante Desastres]] | Concreta [[ADR-0010 Backups Externos Cifrados]] |
+| [[12.01 Política de Cambios y Trazabilidad]] | Concreta [[ADR-0017 Registro y Trazabilidad de Cambios]] |
+| [[12.02 Registro de Cambios]] | Evidencia [[ADR-0017 Registro y Trazabilidad de Cambios]] |
+| [[05.07 Gobierno del Cambio]] | Concreta [[ADR-0017 Registro y Trazabilidad de Cambios]] |
 | [[08.12 Backlog Maestro]] | Recoge las consecuencias pendientes de cada ADR |

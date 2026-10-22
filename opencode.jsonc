@@ -1,0 +1,72 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permissions": [
+    // ===================================================================
+    // Base: todo permitido de forma explícita.
+    // A partir de aquí, cada regla posterior pisa a la anterior.
+    // El orden importa: la ÚLTIMA regla que coincide es la que gana.
+    // ===================================================================
+    { "action": "read", "resource": "*", "effect": "allow" },
+    { "action": "edit", "resource": "*", "effect": "allow" },
+    { "action": "glob", "resource": "*", "effect": "allow" },
+    { "action": "grep", "resource": "*", "effect": "allow" },
+    { "action": "shell", "resource": "*", "effect": "allow" },
+
+    // ===================================================================
+    // 1. NADA SE BORRA
+    // Los documentos y el registro del proyecto no se eliminan: se retiran
+    // (status: deprecated / superseded) y se redirigen.
+    // Ver: sistema cai/12 - Registro de Cambios/12.01 Política de Cambios
+    // ===================================================================
+    { "action": "shell", "resource": "rm *", "effect": "deny" },
+    { "action": "shell", "resource": "rm*", "effect": "deny" },
+    { "action": "shell", "resource": "unlink *", "effect": "deny" },
+    { "action": "shell", "resource": "shred *", "effect": "deny" },
+    { "action": "shell", "resource": "trash *", "effect": "deny" },
+    { "action": "shell", "resource": "git clean*", "effect": "deny" },
+    { "action": "shell", "resource": "find * -delete", "effect": "deny" },
+    { "action": "shell", "resource": "find * -exec rm*", "effect": "deny" },
+
+    // ===================================================================
+    // 2. LA HISTORIA NO SE REESCRIBE
+    // Los tags deben seguir apuntando a lo que dicen apuntar.
+    // Ver: ADR-0004 y 12.04 Versionado de la Documentación
+    // ===================================================================
+    { "action": "shell", "resource": "git reset --hard*", "effect": "deny" },
+    { "action": "shell", "resource": "git push --force*", "effect": "deny" },
+    { "action": "shell", "resource": "git push -f*", "effect": "deny" },
+    { "action": "shell", "resource": "git push*main*", "effect": "deny" },
+    { "action": "shell", "resource": "git filter-branch*", "effect": "deny" },
+    { "action": "shell", "resource": "git checkout -- *", "effect": "ask" },
+    { "action": "shell", "resource": "git restore*", "effect": "ask" },
+    { "action": "shell", "resource": "git rebase*", "effect": "ask" },
+
+    // ===================================================================
+    // 3. LAS DECISIONES Y EL REGISTRO SE TOCAN CON CONFIRMACIÓN
+    // Un ADR aceptado no se edita: se sustituye por otro.
+    // ===================================================================
+    { "action": "edit", "resource": "sistema cai/11 - Decisiones ADR/*", "effect": "ask" },
+    { "action": "edit", "resource": "sistema cai/12 - Registro de Cambios/*", "effect": "ask" },
+
+    // ===================================================================
+    // 4. EL COMMIT PIDE CONFIRMACIÓN
+    // El hook pre-commit bloquea si falta la entrada de registro.
+    // ===================================================================
+    { "action": "shell", "resource": "git commit*", "effect": "ask" },
+    { "action": "shell", "resource": "git tag*", "effect": "ask" },
+
+    // ===================================================================
+    // 5. SECRETOS: SIEMPRE PREGUNTA
+    // ===================================================================
+    { "action": "read", "resource": "*.env", "effect": "ask" },
+    { "action": "read", "resource": "*.env.*", "effect": "ask" },
+    { "action": "read", "resource": "*.key", "effect": "ask" },
+    { "action": "read", "resource": "*.pem", "effect": "ask" },
+    { "action": "read", "resource": "*.p12", "effect": "ask" },
+
+    // ===================================================================
+    // 6. FUERA DEL PROYECTO: SIEMPRE PREGUNTA
+    // ===================================================================
+    { "action": "external_directory", "resource": "*", "effect": "ask" }
+  ]
+}

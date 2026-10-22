@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# pre-commit hook — Proyecto CAI
+# Bloquea commits que modifiquen la bóveda sin entrada en 12.02 Registro de Cambios
+# Ver: AGENTS.md §5 · 12.01 Política de Cambios y Trazabilidad
+
+set -e
+
+RAIZ="$(git rev-parse --show-toplevel)"
+REGISTRO="$RAIZ/sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md"
+
+# Archivos staged
+STAGED=$(git diff --cached --name-only)
+[ -z "$STAGED" ] && exit 0
+
+# ¿Toca archivos que requieren registro?
+REQUIERE=0
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    sistema\ cai/*|AGENTS.md|CLAUDE.md|opencode.jsonc|.opencode/*|bin/*)
+      REQUIERE=1
+      break
+      ;;
+  esac
+done <<< "$STAGED"
+
+[ "$REQUIERE" -eq 0 ] && exit 0
+
+# Leer mensaje de commit (si existe, en merge/rebase puede no haberlo aún)
+MSG_FILE="$(git rev-parse --git-dir)/COMMIT_EDITMSG"
+if [ -f "$MSG_FILE" ] && [ -s "$MSG_FILE" ]; then
+  MSG=$(grep -v '^#' "$MSG_FILE" | tr '\n' ' ')
+else
+  # commit -m pasado por env o stdin
+  MSG="${GIT_EDITOR:-${EDITOR:-}}"
+  # fallback: no podemos leer fácilmente; exigimos patrón
+  MSG=""
+fi
+
+# También revisar variable de entorno si se usó -m
+if [ -n "${CAI_COMMIT_MSG:-}" ]; then
+  MSG="$MSG $CAI_COMMIT_MSG"
+fi
+
+# Buscar REG-AAAA-NNN en el mensaje
+if ! echo "$MSG" | grep -qE 'REG-[0-9]{4}-[0-9]{3}'; then
+  echo ""
+  echo "═══════════════════════════════════════════════════════════════════════"
+  echo " BLOQUEO PRE-COMMIT — Falta entrada en el registro de cambios"
+  echo "═══════════════════════════════════════════════════════════════════════"
+  echo ""
+  echo "Estás modificando archivos del proyecto CAI sin citar un REG-."
+  echo ""
+  echo "Pasos obligatorios (AGENTS.md §5):"
+  echo "  1. Agregá la entrada en: sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md"
+  echo "     podés usar: bin/cai-log.py cambio ..."
+  echo "  2. Incluí REG-AAAA-NNN en el mensaje del commit"
+  echo ""
+  echo "Archivos staged que activaron esta regla:"
+  echo "$STAGED" | sed 's/^/    /'
+  echo ""
+  echo "Si es un N1 editorial muy menor, igual debés registrar el cambio."
+  echo "═══════════════════════════════════════════════════════════════════════"
+  echo ""
+  exit 1
+fi
+
+REG=$(echo "$MSG" | grep -oE 'REG-[0-9]{4}-[0-9]{3}' | head -1)
+
+# Verificar que la entrada exista
+if [ ! -f "$REGISTRO" ]; then
+  echo "ERROR: No se encuentra $REGISTRO"
+  exit 1
+fi
+
+if ! grep -q "^## $REG\\b" "$REGISTRO"; then
+  echo ""
+  echo "ERROR: El ID $REG no existe como entrada en 12.02"
+  echo "Escribí la entrada primero con bin/cai-log.py cambio ..."
+  echo ""
+  exit 1
+fi
+
+# Verificar borrados justificados
+DELETED=$(git diff --cached --diff-filter=D --name-only)
+if [ -n "$DELETED" ]; then
+  if ! echo "$MSG" | grep -qiE 'borra|elimina|retiro|deprecat|supersed'; then
+    echo ""
+    echo "ADVERTENCIA: Hay archivos eliminados sin mención de retiro/deprecación en el mensaje."
+    echo "Según 12.01 §6: NO se borra, se retira (deprecated/superseded)."
+    echo "Justificá el retiro en la entrada del registro."
+    echo ""
+  fi
+fi
+
+exit 0

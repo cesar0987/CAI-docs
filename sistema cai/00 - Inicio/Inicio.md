@@ -42,6 +42,7 @@ related:
 - [[00.02 Glosario]] — términos del dominio y técnicos
 - [[00.03 Stack, Versiones y Dependencias]] — qué se usa y por qué
 - [[00.04 Plan Maestro de Implementación]] — el plan completo con análisis y comparaciones
+- [[00.05 Configuracion de la Boveda]] — configuración de Obsidian, adjuntos y búsquedas guardadas
 
 ### `01 - Requisitos`
 - [[01.01 Visión, Objetivos y Principios]]
@@ -87,6 +88,7 @@ related:
 - [[05.04 Checklist de Pull Request]]
 - [[05.05 Estrategia de Pruebas]]
 - [[05.06 Guía de Contribución]]
+- [[05.07 Gobierno del Cambio]] — las reglas de control, escalabilidad y legibilidad
 
 ### `06 - Versionado y Rollback`
 - [[06.01 Estrategia de Versionado]]
@@ -131,6 +133,16 @@ related:
 - [[ADR-0005 Release por Symlink]] · [[ADR-0006 Cifrado de Notas Clínicas]]
 - [[ADR-0007 Cuentas Familiares Compartidas]] · [[ADR-0008 Stack Laravel Filament PostgreSQL]]
 - [[ADR-0009 Sin Redis en el MVP]] · [[ADR-0010 Backups Externos Cifrados]]
+- [[ADR-0017 Registro y Trazabilidad de Cambios]]
+
+### `12 - Registro de Cambios`
+- [[12.01 Política de Cambios y Trazabilidad]] — qué se puede cambiar, quién lo autoriza y cómo se revierte
+- [[12.02 Registro de Cambios]] — el historial append-only de todo cambio
+- [[12.03 Bitácora de Sesiones con IA]] — quién hizo qué, con qué modelo
+- [[12.04 Versionado de la Documentación]] — el esquema `doc@vX.Y.Z` y los cortes de versión
+
+### `98 - Antecedentes`
+- [[ARQUITECTURA-SISTEMA-CAI (v1 - documento original)]] — documento superado, conservado por histórico
 
 ### `99 - Plantillas`
 - [[Plantilla - Documento]] · [[Plantilla - ADR]] · [[Plantilla - Fase del Plan]] · [[Plantilla - Requisito Funcional]]
@@ -146,6 +158,7 @@ related:
 5. **Todo release se puede deshacer.** Ver [[06.06 Procedimiento de Rollback]].
 6. **El backup en el mismo servidor no es un backup.** Ver [[06.07 Backups y Recuperación]].
 7. **Una decisión no obvia se escribe como ADR.** Ver [[Índice de ADRs]].
+8. **Nada se borra y todo cambio se registra.** Ver [[12.01 Política de Cambios y Trazabilidad]] y [[12.02 Registro de Cambios]].
 
 ---
 
@@ -184,6 +197,7 @@ related:
 | [[ADR-0008 Stack Laravel Filament PostgreSQL]] | PHP 8.3 + Laravel 11 + Filament 3 + PostgreSQL 16 | Tecnología |
 | [[ADR-0009 Sin Redis en el MVP]] | Cola y caché sobre `database` y `file` | Infraestructura |
 | [[ADR-0010 Backups Externos Cifrados]] | Regla 3-2-1 con copia externa cifrada y custodio aparte | Continuidad |
+| [[ADR-0017 Registro y Trazabilidad de Cambios]] | Bóveda versionada, registro append-only y atribución de IA | Gobernanza |
 
 **Pendientes de decisión de Dirección:** P1 (modelo de cuotas), P2 (redondeo),
 P3 (asistencia), P4 (retención clínica), P7 (alcance del cifrado) y P16
@@ -191,7 +205,27 @@ P3 (asistencia), P4 (retención clínica), P7 (alcance del cifrado) y P16
 
 ---
 
-## 6. Documentos relacionados
+## 6. Registro y trazabilidad
+
+> [!important] Antes de tocar un archivo, lee `AGENTS.md`
+> `AGENTS.md` (raíz del repositorio) es la puerta de entrada obligatoria para
+> cualquier agente, humano o IA. Enumera el orden de lectura, las prohibiciones y
+> lo que hay que registrar.
+
+| Documento | Para qué |
+|---|---|
+| `AGENTS.md` (raíz) | Las reglas no negociables; se lee antes de actuar |
+| [[12.01 Política de Cambios y Trazabilidad]] | Qué se puede cambiar, severidad, aprobación y reversión |
+| [[12.02 Registro de Cambios]] | El historial de todo cambio: motivo, archivos, verificación y autor |
+| [[12.03 Bitácora de Sesiones con IA]] | Qué modelo intervino en cada sesión y con qué resultado |
+| [[12.04 Versionado de la Documentación]] | Cómo se corta y se consulta una versión de la bóveda |
+| [[05.07 Gobierno del Cambio]] | Las reglas de control, escalabilidad y legibilidad |
+
+**Versionado de la bóveda:** tag `doc@vX.Y.Z`. Línea base: `doc@v0.1.0`.
+
+---
+
+## 7. Documentos relacionados
 
 - [[01.07 Preguntas Abiertas y Decisiones Pendientes]] — lo que bloquea qué fase
 - [[08.13 Calendario y Estimativas]] — plazos
