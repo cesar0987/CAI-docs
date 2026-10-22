@@ -99,6 +99,7 @@ related:
 - [[06.06 Procedimiento de Rollback]]
 - [[06.07 Backups y Recuperación]]
 - [[06.08 Verificacion de Restauracion]]
+- [[06.09 Guía de Actualización]]
 
 ### `07 - Infraestructura`
 - [[07.01 Arquitectura del Servidor del Centro]]

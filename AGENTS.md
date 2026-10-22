@@ -40,6 +40,12 @@
 | 9 | **Reescribir entradas de registro** ya escritas | El registro es de solo agregar. Las correcciones se **agregan** |
 | 10 | **Avanzar de fase sin el gate firmado** | El gate de `08 - Plan de Trabajo` define qué se puede empezar |
 
+> [!tip] Evolucionar, no romper
+> **Prefiere hacer cambios incrementales y compatibles hacia atrás.** Añade antes que
+> sustituyas. Si algo va a desaparecer, márcalo `@deprecated` y convive al menos
+> **2 versiones menores** antes de retirarlo en `MAJOR`. Todo cambio con ruptura
+> necesita [[06.09 Guía de Actualización]].
+
 ---
 
 ## 1.1 Comandos rápidos
