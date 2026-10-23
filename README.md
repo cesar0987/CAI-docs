@@ -75,16 +75,18 @@ bin/cai-log.py verificar --mensaje .git/COMMIT_EDITMSG
 python3 -m unittest discover -s bin/tests -v
 ```
 
-Cubren la política de trazabilidad, el registro y los hooks de Git (35 casos al
-2026-10-22). No requieren dependencias externas.
+Cubren la política de trazabilidad, el registro, los hooks de Git y las reglas
+del validador sobre el registro (40 casos al 2026-10-22). No requieren
+dependencias externas.
 
 ## Estado de calidad de las herramientas
 
-La revisión de calidad está cerrada en sus dos primeras tandas (T1 y T2,
-2026-10-22): los tres hallazgos P0 se corrigieron y el registro se escribe una
-sola vez de forma atómica. El plugin ya no escribe en la bóveda, el mensaje del
-commit se verifica donde existe (`commit-msg`) y hay pruebas automatizadas.
-Quedan las tandas T3–T4 (constantes y validaciones, CI y documentación):
+La revisión de calidad está cerrada en sus tres primeras tandas (T1, T2 y T3,
+2026-10-22): los tres hallazgos P0 se corrigieron, el registro se escribe una
+sola vez de forma atómica y el índice se inserta bajo un marcador estable. El
+plugin ya no escribe en la bóveda, el mensaje del commit se verifica donde
+existe (`commit-msg`) y hay pruebas automatizadas. Queda la tanda T4 (CI,
+documentación de uso y traslado de la configuración de producto):
 
 - Diagnóstico y plan: `sistema cai/05 - Proceso de Desarrollo/05.08 Revision de Calidad de las Herramientas de Gobernanza.md`
 - Contrato y matriz de pruebas: `sistema cai/05 - Proceso de Desarrollo/05.09 Herramientas de Gobernanza.md`

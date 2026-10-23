@@ -18,7 +18,6 @@
     // (status: deprecated / superseded) y se redirigen.
     // Ver: sistema cai/12 - Registro de Cambios/12.01 Política de Cambios
     // ===================================================================
-    { "action": "shell", "resource": "rm *", "effect": "deny" },
     { "action": "shell", "resource": "rm*", "effect": "deny" },
     { "action": "shell", "resource": "unlink *", "effect": "deny" },
     { "action": "shell", "resource": "shred *", "effect": "deny" },
@@ -50,7 +49,7 @@
 
     // ===================================================================
     // 4. EL COMMIT PIDE CONFIRMACIÓN
-    // El hook pre-commit bloquea si falta la entrada de registro.
+    // El hook commit-msg bloquea si el mensaje no cita una entrada REG.
     // ===================================================================
     { "action": "shell", "resource": "git commit*", "effect": "ask" },
     { "action": "shell", "resource": "git tag*", "effect": "ask" },

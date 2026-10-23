@@ -58,11 +58,64 @@ type SessionState = {
   reminded: boolean
 }
 
+type ModelInfo = {
+  providerID?: string
+  id?: string
+  variant?: string
+}
+
+type ContextEvent = {
+  sessionID: string
+  model?: ModelInfo
+  agent?: string
+  system: { type: string; text: string }[]
+}
+
+type ToolInput = {
+  command?: unknown
+  path?: unknown
+  filePath?: unknown
+  file?: unknown
+}
+
+type ToolEvent = {
+  sessionID: string
+  tool?: string
+  input?: ToolInput
+}
+
+/** Superficie mínima del SDK que usa este plugin (V2). */
+type HookContext = {
+  location?: {
+    project?: { canonical?: string }
+    directory?: string
+  }
+  session: {
+    hook(
+      name: "context",
+      callback: (event: ContextEvent) => void | Promise<void>,
+    ): Promise<void>
+  }
+  tool: {
+    hook(
+      name: "execute.before" | "execute.after",
+      callback: (event: ToolEvent) => void | Promise<void>,
+    ): Promise<void>
+  }
+}
+
 const sessions = new Map<string, SessionState>()
+
+/** Límite de sesiones recordadas en memoria; las más antiguas se descartan. */
+const MAX_SESIONES = 100
 
 function state(sessionID: string): SessionState {
   let s = sessions.get(sessionID)
   if (!s) {
+    if (sessions.size >= MAX_SESIONES) {
+      const masAntigua = sessions.keys().next().value
+      if (masAntigua !== undefined) sessions.delete(masAntigua)
+    }
     s = {
       sessionID,
       providerID: "desconocido",
@@ -92,14 +145,14 @@ const DESTRUCTIVOS: RegExp[] = [
 
 export default {
   id: "cai.log",
-  async setup(ctx: any) {
+  async setup(ctx: HookContext) {
     const worktree: string =
       ctx?.location?.project?.canonical || ctx?.location?.directory || process.cwd()
 
     // ----------------------------------------------------------------
     // 1. Recordatorio de entrada (una vez por sesión)
     // ----------------------------------------------------------------
-    await ctx.session.hook("context", (event: any) => {
+    await ctx.session.hook("context", (event: ContextEvent) => {
       const s = state(event.sessionID)
       if (event.model) {
         s.providerID = event.model.providerID ?? s.providerID
@@ -116,13 +169,13 @@ export default {
     // ----------------------------------------------------------------
     // 2. Archivos tocados y comandos destructivos
     // ----------------------------------------------------------------
-    await ctx.tool.hook("execute.before", (event: any) => {
+    await ctx.tool.hook("execute.before", (event: ToolEvent) => {
       const s = state(event.sessionID)
       const tool = String(event.tool || "")
       const input = event.input || {}
 
       if (["write", "edit", "patch", "multi_edit"].includes(tool)) {
-        const p = input.path || input.filePath || input.file
+        const p = input.path ?? input.filePath ?? input.file
         if (typeof p === "string" && p.length > 0) {
           s.touched.add(relative(worktree, resolve(worktree, p)))
         }
@@ -152,7 +205,7 @@ export default {
     // ----------------------------------------------------------------
     // 3. Persistencia del estado de sesión (fuera del control de versiones)
     // ----------------------------------------------------------------
-    await ctx.tool.hook("execute.after", (event: any) => {
+    await ctx.tool.hook("execute.after", (event: ToolEvent) => {
       const s = sessions.get(event.sessionID)
       if (!s) return
       try {

@@ -49,6 +49,8 @@ updated: 2026-10-01
 
 ## 3. Índice de entradas
 
+<!-- REG-INDEX:START -->
+
 | ID | Fecha | Tipo | Severidad | Resumen | Sesión |
 |---|---|---|---|---|---|
 | REG-{ANIO}-002 | 2026-10-01 | edición | N1 | segundo | — |
@@ -90,6 +92,16 @@ class Correlativo(unittest.TestCase):
     def test_id_pedido_nuevo_se_respeta(self):
         pedido = f"REG-{ANIO}-050"
         self.assertEqual(self.modulo.preparar_id(REGISTRO_FICTICIO, "REG", pedido), pedido)
+
+    def test_id_mal_formado_se_rechaza(self):
+        for pedido in ("REG-26-1", "SES-2026-001", f"REG-{ANIO}-0012", "REG-2026-1"):
+            with self.subTest(pedido=pedido):
+                with self.assertRaises(self.modulo.CaiError):
+                    self.modulo.preparar_id(REGISTRO_FICTICIO, "REG", pedido)
+
+    def test_id_de_otro_anio_se_rechaza(self):
+        with self.assertRaises(self.modulo.CaiError):
+            self.modulo.preparar_id(REGISTRO_FICTICIO, "REG", "REG-2020-001")
 
 
 class Modelo(unittest.TestCase):
@@ -155,10 +167,9 @@ class EscrituraAtomica(unittest.TestCase):
                 escrito = self.modulo._registrar(
                     str(ruta),
                     REGISTRO_FICTICIO,
-                    "REG-ENTRIES",
-                    "## 3. Índice de entradas",
+                    "REG",
                     "\n## REG-NUEVO · prueba\n",
-                    f"| REG-NUEVO | 2026-10-22 | edición | N2 | prueba | — |\n",
+                    "| REG-NUEVO | 2026-10-22 | edición | N2 | prueba | — |\n",
                     False,
                 )
 
@@ -178,14 +189,33 @@ class EscrituraAtomica(unittest.TestCase):
                 escrito = self.modulo._registrar(
                     str(ruta),
                     REGISTRO_FICTICIO,
-                    "REG-ENTRIES",
-                    "## 3. Índice de entradas",
+                    "REG",
                     "\n## REG-NUEVO · prueba\n",
                     "| REG-NUEVO | fila |\n",
                     True,
                 )
             self.assertFalse(escrito)
             self.assertEqual(ruta.read_text(encoding="utf-8"), REGISTRO_FICTICIO)
+
+    def test_modo_seco_rechaza_si_falta_el_marcador_del_indice(self):
+        sin_indice = REGISTRO_FICTICIO.replace("<!-- REG-INDEX:START -->", "")
+        with self.assertRaises(self.modulo.CaiError):
+            self.modulo._registrar(
+                "registro.md",
+                sin_indice,
+                "REG",
+                "\n## REG-NUEVO · prueba\n",
+                "| REG-NUEVO | fila |\n",
+                True,
+            )
+
+    def test_la_fila_nueva_va_arriba_de_las_existentes(self):
+        fila = f"| REG-{ANIO}-099 | 2026-10-22 | edición | N1 | nueva | — |"
+        nuevo = self.modulo.insertar_en_indice(
+            REGISTRO_FICTICIO, "<!-- REG-INDEX:START -->", fila
+        )
+        self.assertLess(nuevo.index(fila), nuevo.index(f"| REG-{ANIO}-002 |"))
+        self.assertLess(nuevo.index("| ID | Fecha |"), nuevo.index(fila))
 
 
 class ComandoCambio(unittest.TestCase):
@@ -194,6 +224,25 @@ class ComandoCambio(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.modulo = cargar_modulo()
+
+    def argumentos(self) -> list[str]:
+        return [
+            "cambio",
+            "--tipo",
+            "edición",
+            "--severidad",
+            "N2",
+            "--motivo",
+            "Se unifica el flujo de registro para escribir una sola vez y sin estados parciales",
+            "--archivos",
+            "bin/cai-log.py,bin/validate-vault.py",
+            "--autor",
+            "Prueba",
+            "--modelo",
+            "opencode/big-pickle#default",
+            "--verificacion",
+            "unittest -> OK",
+        ]
 
     def test_registra_entrada_y_fila_en_una_sola_escritura(self):
         with tempfile.TemporaryDirectory() as carpeta:
@@ -216,25 +265,7 @@ class ComandoCambio(unittest.TestCase):
                 mock.patch.dict(os.environ, {"CAI_SESION": ""}, clear=False),
                 redirect_stdout(io.StringIO()) as salida,
             ):
-                codigo = self.modulo.main(
-                    [
-                        "cambio",
-                        "--tipo",
-                        "edición",
-                        "--severidad",
-                        "N2",
-                        "--motivo",
-                        "Se unifica el flujo de registro para escribir una sola vez y sin estados parciales",
-                        "--archivos",
-                        "bin/cai-log.py,bin/validate-vault.py",
-                        "--autor",
-                        "Prueba",
-                        "--modelo",
-                        "opencode/big-pickle#default",
-                        "--verificacion",
-                        "unittest -> OK",
-                    ]
-                )
+                codigo = self.modulo.main(self.argumentos())
 
             esperado = f"REG-{ANIO}-003"
             self.assertEqual(codigo, 0)
@@ -245,6 +276,25 @@ class ComandoCambio(unittest.TestCase):
             self.assertIn(f"## {esperado}", resultado)
             self.assertIn(f"| {esperado} |", resultado)
             self.assertIn(f"updated: {self.modulo.hoy()}", resultado)
+
+    def test_sesion_inexistente_no_escribe_nada(self):
+        with tempfile.TemporaryDirectory() as carpeta:
+            registro = Path(carpeta) / "12.02 Registro de Cambios.md"
+            bitacora = Path(carpeta) / "12.03 Bitácora de Sesiones con IA.md"
+            registro.write_text(REGISTRO_FICTICIO, encoding="utf-8")
+            bitacora.write_text("# Bitácora\n", encoding="utf-8")
+
+            with (
+                mock.patch.object(self.modulo, "REGISTRO", str(registro)),
+                mock.patch.object(self.modulo, "BITACORA", str(bitacora)),
+                redirect_stderr(io.StringIO()),
+            ):
+                codigo = self.modulo.main(
+                    self.argumentos() + ["--sesion", "SES-2026-999"]
+                )
+
+            self.assertEqual(codigo, 1)
+            self.assertEqual(registro.read_text(encoding="utf-8"), REGISTRO_FICTICIO)
 
 
 class ErroresDePolitica(unittest.TestCase):

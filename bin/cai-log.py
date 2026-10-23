@@ -73,10 +73,18 @@ TIPOS = {
     "proceso",
 }
 SEVERIDADES = {"N1", "N2", "N3", "N4"}
+SEVERIDADES_CON_RASTREO = {"N3", "N4"}
 RESULTADOS = {"completado", "parcial", "fallido"}
 ESTADOS = {"aplicado", "fallido", "revertido", "pendiente de revisión"}
 
 SIN_DATO = "—"
+MIN_PALABRAS_MOTIVO = 10
+PATRON_ID = re.compile(r"^(?P<prefijo>REG|SES)-(?P<anio>\d{4})-(?P<numero>\d{3})$")
+MARCADOR_ENTRADAS = {"REG": "REG-ENTRIES", "SES": "SES-ENTRIES"}
+MARCADOR_INDICE = {
+    "REG": "<!-- REG-INDEX:START -->",
+    "SES": "<!-- SES-INDEX:START -->",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -222,26 +230,35 @@ def insertar_entrada(texto: str, marcador: str, bloque: str) -> str:
     return texto[:posicion] + bloque + texto[posicion:]
 
 
-def insertar_en_indice(texto: str, seccion: str, fila: str) -> str:
-    """Agrega la fila arriba de todo en la tabla de la sección indicada."""
-    if seccion not in texto:
-        fallar(f"no se encontró la sección «{seccion}» para actualizar el índice")
-    desde = texto.index(seccion)
+def insertar_en_indice(texto: str, marcador: str, fila: str) -> str:
+    """Agrega la fila arriba de las existentes, debajo del encabezado del índice."""
+    if marcador not in texto:
+        fallar(f"falta el marcador {marcador} en el documento")
+    desde = texto.index(marcador) + len(marcador)
     lineas = texto[desde:].split("\n")
-
-    # La tabla empieza en la primera línea que empieza con «|».
     for posicion, linea in enumerate(lineas):
-        if linea.strip().startswith("|"):
-            # posicion     = encabezado
-            # posicion + 1 = separador
-            corte = desde + len("\n".join(lineas[: posicion + 2])) + 1
-            return texto[:corte] + fila + "\n" + texto[corte:]
-    fallar(f"la sección «{seccion}» no tiene tabla de índice")
+        if not linea.strip().startswith("|"):
+            continue
+        separador = lineas[posicion + 1].strip() if posicion + 1 < len(lineas) else ""
+        if not re.fullmatch(r"\|?[\s:|-]+\|?", separador):
+            fallar(f"la tabla de índice no tiene fila separadora después de {marcador}")
+        corte = desde + len("\n".join(lineas[: posicion + 2])) + 1
+        return texto[:corte] + fila + "\n" + texto[corte:]
+    fallar(f"no hay tabla de índice después del marcador {marcador}")
 
 
 def preparar_id(texto: str, prefijo: str, pedido: str) -> str:
-    """Devuelve el ID a usar y rechaza uno que ya exista en el documento."""
-    identificador = pedido or siguiente_id(texto, prefijo)
+    """Devuelve el ID a usar y rechaza uno mal formado, de otro año o ya existente."""
+    if pedido:
+        coincidencia = PATRON_ID.fullmatch(pedido)
+        if not coincidencia or coincidencia["prefijo"] != prefijo:
+            fallar(f"el ID «{pedido}» no cumple el formato {prefijo}-AAAA-NNN")
+        anio = datetime.now().astimezone().year
+        if int(coincidencia["anio"]) != anio:
+            fallar(f"el ID {pedido} no corresponde al año en curso ({anio})")
+        identificador = pedido
+    else:
+        identificador = siguiente_id(texto, prefijo)
     if re.search(rf"^##[ \t]*{re.escape(identificador)}\b", texto, re.MULTILINE):
         fallar(f"el ID {identificador} ya existe: el documento es de solo agregar")
     return identificador
@@ -250,22 +267,22 @@ def preparar_id(texto: str, prefijo: str, pedido: str) -> str:
 def _registrar(
     ruta: str,
     texto: str,
-    marcador: str,
-    seccion: str,
+    prefijo: str,
     bloque: str,
     fila: str,
     seco: bool,
 ) -> bool:
     """Aplica las dos inserciones en memoria y escribe el documento una sola vez.
 
-    Devuelve `False` en modo seco (no escribe nada).
+    En modo seco comprueba todo (marcadores incluidos) y solo omite la escritura.
+    Devuelve `False` en ese caso.
     """
+    texto = insertar_entrada(texto, MARCADOR_ENTRADAS[prefijo], bloque)
+    texto = insertar_en_indice(texto, MARCADOR_INDICE[prefijo], fila)
     if seco:
         print(bloque)
         print(fila)
         return False
-    texto = insertar_entrada(texto, marcador, bloque)
-    texto = insertar_en_indice(texto, seccion, fila)
     escribir(ruta, actualizar_fecha(texto))
     return True
 
@@ -435,12 +452,12 @@ def comando_cambio(args: argparse.Namespace) -> int:
     validar_catalogo(args.tipo, TIPOS, "tipo")
     validar_catalogo(args.severidad, SEVERIDADES, "severidad")
     validar_catalogo(args.estado, ESTADOS, "estado")
-    if len(args.motivo.split()) < 10:
+    if len(args.motivo.split()) < MIN_PALABRAS_MOTIVO:
         fallar(
             "el motivo tiene menos de 10 palabras: no explica nada. "
             "Escribí por qué se hizo el cambio, no qué se cambió (12.02 §4.1)."
         )
-    if args.severidad in {"N3", "N4"} and not args.rastreo:
+    if args.severidad in SEVERIDADES_CON_RASTREO and not args.rastreo:
         fallar(
             f"un cambio {args.severidad} exige rastreo (ADR, RF, RN o P). "
             "Ver 12.01 §5 y AGENTS.md §4."
@@ -488,9 +505,7 @@ def comando_cambio(args: argparse.Namespace) -> int:
         f"| {celda(resumen)} | {sesion} |"
     )
 
-    if not _registrar(
-        REGISTRO, texto, "REG-ENTRIES", "## 3. Índice de entradas", bloque, fila, args.seco
-    ):
+    if not _registrar(REGISTRO, texto, "REG", bloque, fila, args.seco):
         return 0
 
     print(f"OK  {identificador} registrado en 12.02")
@@ -545,9 +560,7 @@ def comando_sesion(args: argparse.Namespace) -> int:
         f"| `{modelo_completo}` | {args.resultado} | {celda(args.entradas or SIN_DATO)} |"
     )
 
-    if not _registrar(
-        BITACORA, texto, "SES-ENTRIES", "## 4. Índice de sesiones", bloque, fila, args.seco
-    ):
+    if not _registrar(BITACORA, texto, "SES", bloque, fila, args.seco):
         return 0
 
     print(f"OK  {identificador} registrada en 12.03")

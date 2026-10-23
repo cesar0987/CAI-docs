@@ -34,7 +34,7 @@ import re
 import sys
 import unicodedata
 from dataclasses import dataclass, field
-from typing import Iterable
+from typing import Iterable, Literal
 
 # ---------------------------------------------------------------------------
 # Configuración
@@ -47,6 +47,12 @@ CAMPOS_OBLIGATORIOS = ["title", "type", "status", "tags", "owner", "updated"]
 ESTADOS_VALIDOS = {"borrador", "vigente", "deprecated", "superseded"}
 # Los ADR usan sus propios estados (ver 00.01 §4 y Plantilla - ADR).
 ESTADOS_ADR = {"borrador", "aceptado", "revisado", "reemplazado", "descartado"}
+
+# Severidades y posición de los avisos que no dependen de una línea concreta.
+Severidad = Literal["error", "aviso"]
+ERROR: Severidad = "error"
+AVISO: Severidad = "aviso"
+PRIMERA_LINEA = 1
 
 # Rangos Unicode que no pertenecen al español ni a la notación técnica del proyecto.
 RANGOS_PROHIBIDOS = [
@@ -85,7 +91,7 @@ class Problema:
     linea: int
     regla: str
     mensaje: str
-    severidad: str = "error"  # error | aviso
+    severidad: Severidad = ERROR
 
 
 @dataclass
@@ -99,11 +105,11 @@ class Resultado:
 
     @property
     def errores(self) -> list[Problema]:
-        return [p for p in self.problemas if p.severidad == "error"]
+        return [p for p in self.problemas if p.severidad == ERROR]
 
     @property
     def avisos(self) -> list[Problema]:
-        return [p for p in self.problemas if p.severidad == "aviso"]
+        return [p for p in self.problemas if p.severidad == AVISO]
 
 
 # ---------------------------------------------------------------------------
@@ -150,13 +156,13 @@ def destinos_wikilink(texto: str) -> Iterable[tuple[int, str]]:
                 yield numero, destino
 
 
-def leer_frontmatter(texto: str) -> tuple[dict[str, str], int]:
-    """Devuelve (campos, número de líneas del bloque)."""
+def leer_frontmatter(texto: str) -> dict[str, str]:
+    """Devuelve los campos del frontmatter; vacío si no hay bloque válido."""
     if not texto.startswith("---"):
-        return {}, 0
+        return {}
     fin = texto.find("\n---", 3)
     if fin == -1:
-        return {}, 0
+        return {}
     bloque = texto[3:fin]
     campos: dict[str, str] = {}
     clave_actual = None
@@ -169,7 +175,7 @@ def leer_frontmatter(texto: str) -> tuple[dict[str, str], int]:
             campos[clave_actual] = valor.strip()
         elif linea.startswith((" ", "\t", "-")) and clave_actual:
             campos[clave_actual] = (campos[clave_actual] + " " + linea.strip()).strip()
-    return campos, bloque.count("\n") + 2
+    return campos
 
 
 # ---------------------------------------------------------------------------
@@ -178,26 +184,26 @@ def leer_frontmatter(texto: str) -> tuple[dict[str, str], int]:
 
 
 def comprobar_frontmatter(ruta: str, texto: str, res: Resultado) -> None:
-    campos, _ = leer_frontmatter(texto)
+    campos = leer_frontmatter(texto)
     nombre = os.path.splitext(os.path.basename(ruta))[0]
 
     if not campos:
-        res.add(ruta, 1, "frontmatter", "Falta el bloque de frontmatter (--- … ---)", "error")
+        res.add(ruta, PRIMERA_LINEA, "frontmatter", "Falta el bloque de frontmatter (--- … ---)", ERROR)
         return
 
     for campo in CAMPOS_OBLIGATORIOS:
         if campo not in campos or not campos[campo]:
-            res.add(ruta, 1, "frontmatter", f"Falta el campo obligatorio `{campo}`", "error")
+            res.add(ruta, PRIMERA_LINEA, "frontmatter", f"Falta el campo obligatorio `{campo}`", ERROR)
 
     titulo = campos.get("title", "").strip('"').strip("'")
     esperado = sin_prefijo(nombre)
     if titulo and normalizar(titulo) != normalizar(esperado):
         res.add(
             ruta,
-            1,
+            PRIMERA_LINEA,
             "frontmatter",
             f"`title` («{titulo}») no coincide con el nombre del archivo sin prefijo («{esperado}»)",
-            "error",
+            ERROR,
         )
 
     estado = campos.get("status", "").strip().strip('"').strip("'")
@@ -205,20 +211,20 @@ def comprobar_frontmatter(ruta: str, texto: str, res: Resultado) -> None:
     if estado and estado not in validos:
         res.add(
             ruta,
-            1,
+            PRIMERA_LINEA,
             "frontmatter",
             f"`status` inválido («{estado}»). Válidos: {', '.join(sorted(validos))}",
-            "error",
+            ERROR,
         )
 
     actualizado = campos.get("updated", "").strip()
     if actualizado and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", actualizado):
         res.add(
             ruta,
-            1,
+            PRIMERA_LINEA,
             "frontmatter",
-            f"`updated` debe tener formato YYYY-MM-DD (vale «{actualizado}»)",
-            "error",
+            f"`updated` debe tener formato YYYY-MM-DD (valor «{actualizado}»)",
+            ERROR,
         )
 
 
@@ -227,7 +233,7 @@ def comprobar_wikilinks(ruta: str, limpio: str, indice: dict[str, str], res: Res
         res.wikilinks += 1
         if normalizar(destino) in indice:
             continue
-        res.add(ruta, numero, "wikilinks", f"Enlace roto: [[{destino}]]", "error")
+        res.add(ruta, numero, "wikilinks", f"Enlace roto: [[{destino}]]", ERROR)
 
 
 def comprobar_tablas(ruta: str, limpio: str, res: Resultado) -> None:
@@ -265,7 +271,7 @@ def _validar_bloque(ruta, bloque, inicio, celdas, res: Resultado) -> None:
             bloque[1][0],
             "tablas",
             "Falta la fila separadora `|---|` después del encabezado",
-            "error",
+            ERROR,
         )
         return
     for numero, linea in bloque[2:]:
@@ -276,7 +282,7 @@ def _validar_bloque(ruta, bloque, inicio, celdas, res: Resultado) -> None:
                 numero,
                 "tablas",
                 f"La fila tiene {obtenidas} celdas y el encabezado {esperadas}",
-                "error",
+                ERROR,
             )
 
 
@@ -291,7 +297,7 @@ def comprobar_caracteres(ruta: str, texto: str, limpio: str, res: Resultado) -> 
                         numero,
                         "caracteres",
                         f"Carácter {nombre} inesperado: «{caracter}» (U+{codigo:04X})",
-                        "error",
+                        ERROR,
                     )
                     break
 
@@ -302,7 +308,7 @@ def comprobar_caracteres(ruta: str, texto: str, limpio: str, res: Resultado) -> 
                 numero,
                 "idioma",
                 f"Palabra en inglés sospechosa en la prosa: «{coincidencia.group(0)}»",
-                "aviso",
+                AVISO,
             )
 
 
@@ -328,7 +334,7 @@ def comprobar_indices(rutas: list[str], textos: dict[str, str], res: Resultado) 
         if clave in indices:
             continue
         if clave not in referenciados:
-            res.add(ruta, 1, "indices", "No está referenciado desde ningún índice", "aviso")
+            res.add(ruta, PRIMERA_LINEA, "indices", "No está referenciado desde ningún índice", AVISO)
 
 
 # ---------------------------------------------------------------------------
