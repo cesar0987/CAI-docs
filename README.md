@@ -76,7 +76,7 @@ python3 -m unittest discover -s bin/tests -v
 ```
 
 Cubren la matriz T-01 a T-23 de `05.09` §9: validador, registro, hooks y
-política (54 casos al 2026-10-22). No requieren dependencias externas; `mypy`
+política (59 casos al 2026-10-23). No requieren dependencias externas; `mypy`
 solo se usa en CI y de forma opcional en local.
 
 ## Estado de calidad de las herramientas
@@ -110,14 +110,11 @@ y `sistema cai/05 - Proceso de Desarrollo/05.07 Gobierno del Cambio.md`.
 ## Integración continua
 
 `.github/workflows/ci.yml` valida este repositorio en cada `push` y en cada
-pull request: ejecuta el validador de la bóveda, las 54 pruebas de `bin/tests/`
+pull request: ejecuta el validador de la bóveda, las 59 pruebas de `bin/tests/`
 y `mypy` sobre las herramientas. No usa Composer ni necesita el código de
 producto.
 
-`deptrac.yaml` sigue aquí como especificación de las fronteras entre módulos,
-pero pertenece al repositorio de producto: se trasladará allí cuando ese
-repositorio incorpore su propio CI (ver 05.08, HERR-14). La verificación local
-obligatoria antes de commitear es:
+La verificación local obligatoria antes de commitear es:
 
 ```bash
 bin/validate-vault.py --quiet

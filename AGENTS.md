@@ -207,6 +207,23 @@ cambio con `--tipo deprecación`.
 | `11 - Decisiones ADR` | Índice y ADR accepted |
 | `12 - Registro de Cambios` | Política, registro de cambios, bitácora de IA, versionado documental |
 
+## 8.1 Mapa por tarea (para agentes)
+
+Partí de la tarea y leé solo lo necesario. Ampliá si hay dependencias o contradicciones.
+
+| Tarea | Ruta recomendada | Notas |
+|---|---|---|
+| **Empezar / entender el proyecto** | `AGENTS.md` → `00 - Inicio/Inicio.md` → `00.04 Plan Maestro de Implementación.md` | Punto de entrada obligatorio. |
+| **Implementar funcionalidad nueva** | `08 - Plan de Trabajo/08.01 Hoja de Ruta.md` (fase/gate) → `02.01 Arquitectura General.md` → `02.03 Reglas de Frontera entre Módulos.md` → documento de fase (`08.0X`) | Verificar gate antes de empezar. |
+| **Cambiar reglas de negocio** | `01.04 Reglas de Negocio.md` → `01.05 Requisitos Funcionales.md` → `03.XX` (modelo afectado) → `ADR` si es no obvio | Si hay cambio de decisión, crear ADR nuevo (nunca editar ADR aceptado). |
+| **Cambiar modelo de datos / migraciones** | `03.XX` documento afectado → `02.05 Esquema de Base de Datos por Módulo.md` → `06.02 Versionado de Esquema de BD.md` → `06.03 Expand-Contract.md` | Obligatorio usar patrón expand-contract. |
+| **Cambiar permisos / autorización** | `04.02 Matriz de Permisos por Rol.md` → `02.06 Modelo de Autorización y Permisos.md` → `04.03 Autorización por Registro.md` | Verificar impacto en todos los roles afectados. |
+| **Corregir bug / flujo existente** | `01.04 Reglas de Negocio.md` (fuente de verdad) → módulo afectado en `02/03` + `03.XX` → `05.07 Gobierno del Cambio.md` (GC aplicables) | Distinguir entre "diseñado" vs "implementado" (código en repo producto). |
+| **Tocar fronteras entre módulos** | `02.03 Reglas de Frontera entre Módulos.md` → `02.04 Capas Internas de un Paquete.md` → `05.07 Gobierno del Cambio.md` (GE-01) | Deptrac impone las reglas en el repo de producto. |
+| **Seguridad / datos clínicos** | `04.04 Datos Clínicos: Cifrado y Acceso.md` → `04.01 Modelo de Seguridad.md` → `04.05 Auditoría de Datos Sensibles.md` → `06.07 Backups y Recuperación.md` | Máxima precaución. Datos reales nunca en este repo. |
+| **Documentar / actualizar tras código** | `05.02 Commits, Ramas y Versionado SemVer.md` → `12.01 Política de Cambios y Trazabilidad.md` → `bin/cai-log.py` (registro + sesión) | Todo cambio debe tener REG + sesión con modelo exacto. |
+| **Investigar inconsistencia doc-vs-implementación** | `02.03 Reglas de Frontera entre Módulos.md` + `05.08 Revision de Calidad de las Herramientas de Gobernanza.md` → revisar código en repo producto | La documentación describe el diseño; verificar en repo producto antes de asumir. |
+
 ---
 
 ## 9. Si algo te bloquea

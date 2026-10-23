@@ -18,8 +18,11 @@ related:
 > pasos de implementación y los manuales de uso están aquí.** No se escribe código hasta
 > que la fase correspondiente esté documentada y aprobada.
 
+> [!tip] Para agentes de IA
+> Empezá por `AGENTS.md` §8.1 «Mapa por tarea». Partí de la tarea concreta y leé solo lo necesario; ampliá si hay dependencias o contradicciones.
+
 **Estado actual:** 📋 Documentación en construcción · **Código:** no iniciado
-**Versión del plan:** 1.0 · **Última actualización:** 2026-10-22
+**Versión del plan:** 1.0 · **Última actualización:** 2026-10-23
 **Calidad de las herramientas:** ✅ T0–T4 aplicadas el 2026-10-22; CI, pruebas y contrato vigentes — ver [[05.08 Revision de Calidad de las Herramientas de Gobernanza]]
 
 ---
