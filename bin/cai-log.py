@@ -29,6 +29,12 @@ Uso rápido
         --area "03 - Modelo de Datos" \
         --resultado completado
 
+    bin/cai-log.py verificar --mensaje .git/COMMIT_EDITMSG
+
+El subcomando `verificar` no escribe nada: comprueba que el mensaje cite un
+REG existente y que los archivos eliminados estén justificados en su entrada.
+Lo invoca el hook `commit-msg` (ADR-0018).
+
 Orden de los argumentos largos: da igual. Los valores con espacios van entre
 comillas.
 
@@ -42,8 +48,10 @@ Referencia: AGENTS.md · 12.01 Política de Cambios y Trazabilidad
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime
 from typing import NoReturn
@@ -190,6 +198,145 @@ def verificacion(valor: str) -> str:
             comando, _, resultado = valor.partition(separador)
             return f"`{comando.strip()}` → {resultado.strip()}"
     return valor
+
+
+# ---------------------------------------------------------------------------
+# Verificación de trazabilidad (la usa el hook commit-msg)
+# ---------------------------------------------------------------------------
+
+PATRON_REG = re.compile(r"\bREG-\d{4}-\d{3}\b")
+RETIRO = re.compile(r"deprecat|supersed|retir|reemplaz|elimin", re.IGNORECASE)
+
+
+def bloque_de_entrada(registro: str, identificador: str) -> str:
+    """Devuelve el texto de una entrada del registro, desde su encabezado."""
+    patron = re.compile(
+        r"^##\s*" + re.escape(identificador) + r"\b.*?(?=^##\s|\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+    encontrado = patron.search(registro)
+    return encontrado.group(0) if encontrado else ""
+
+
+def archivos_eliminados(raiz: str = RAIZ) -> list[str]:
+    """Rutas eliminadas en el índice de Git; vacío si no hay repositorio."""
+    try:
+        salida = subprocess.run(
+            ["git", "diff", "--cached", "--diff-filter=D", "--name-only", "-z"],
+            cwd=raiz,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout
+    except (OSError, subprocess.CalledProcessError):
+        return []
+    return [ruta for ruta in salida.split("\0") if ruta]
+
+
+def es_merge(mensaje: str) -> bool:
+    """Un commit de fusión no introduce cambios propios: no exige registro."""
+    for linea in mensaje.splitlines():
+        limpia = linea.strip()
+        if limpia and not limpia.startswith("#"):
+            return limpia.startswith("Merge ")
+    return False
+
+
+def citas(mensaje: str) -> list[str]:
+    """IDs de registro citados en el mensaje, sin contar líneas de comentario."""
+    texto = "\n".join(
+        linea for linea in mensaje.splitlines() if not linea.lstrip().startswith("#")
+    )
+    return sorted(set(PATRON_REG.findall(texto)))
+
+
+def verificar_mensaje(mensaje: str, registro: str, eliminados: list[str]) -> list[str]:
+    """Devuelve los problemas de política del mensaje. Lista vacía = cumple."""
+    citados = citas(mensaje)
+    if not citados:
+        return [
+            "el mensaje no cita ninguna entrada REG-AAAA-NNN; "
+            "cada commit debe apuntar a su entrada del registro (AGENTS.md §5)"
+        ]
+
+    problemas = [
+        f"el ID {identificador} no existe como entrada en 12.02"
+        for identificador in citados
+        if bloque_de_entrada(registro, identificador) == ""
+    ]
+
+    if eliminados:
+        entradas = "\n".join(bloque_de_entrada(registro, i) for i in citados)
+        sin_mencion = [ruta for ruta in eliminados if ruta not in entradas]
+        if sin_mencion:
+            problemas.append(
+                "el commit elimina archivos que la entrada del registro no menciona: "
+                + ", ".join(sin_mencion)
+            )
+        elif not RETIRO.search(entradas):
+            problemas.append(
+                "el commit elimina archivos y la entrada del registro no justifica el retiro; "
+                "nada se borra: se retira con 'deprecated' o 'superseded' (12.01 §3.1)"
+            )
+    return problemas
+
+
+def comando_verificar(args: argparse.Namespace) -> int:
+    """Comprueba un mensaje de commit contra el registro. Sin efectos secundarios."""
+    if not os.path.isfile(args.mensaje):
+        print(f"ERROR: no existe el archivo de mensaje: {args.mensaje}", file=sys.stderr)
+        return 2
+
+    with open(args.mensaje, encoding="utf-8") as manejador:
+        mensaje = manejador.read()
+
+    if es_merge(mensaje):
+        print("OK  commit de fusión: no se exige entrada de registro")
+        return 0
+
+    if not os.path.isfile(REGISTRO):
+        print(f"ERROR: no existe el registro: {REGISTRO}", file=sys.stderr)
+        return 2
+
+    with open(REGISTRO, encoding="utf-8") as manejador:
+        registro = manejador.read()
+
+    eliminados = archivos_eliminados()
+    problemas = verificar_mensaje(mensaje, registro, eliminados)
+    citados = citas(mensaje)
+
+    if args.json:
+        print(
+            json.dumps(
+                {
+                    "ok": not problemas,
+                    "citados": citados,
+                    "eliminados": eliminados,
+                    "problemas": problemas,
+                },
+                ensure_ascii=False,
+            )
+        )
+    elif problemas:
+        print("", file=sys.stderr)
+        print("BLOQUEO — el mensaje no cumple la política de trazabilidad", file=sys.stderr)
+        print("", file=sys.stderr)
+        for problema in problemas:
+            print(f"  • {problema}", file=sys.stderr)
+        print("", file=sys.stderr)
+        print(
+            "  Pasos: registrá el cambio con `bin/cai-log.py cambio ...` y citá el ID",
+            file=sys.stderr,
+        )
+        print(
+            "  en el mensaje. Referencia: 12.01 Política de Cambios y Trazabilidad §6.",
+            file=sys.stderr,
+        )
+        print("", file=sys.stderr)
+    else:
+        print(f"OK  mensaje conforme: {', '.join(citados)}")
+
+    return 0 if not problemas else 1
 
 
 def actualizar_fecha(texto: str) -> str:
@@ -416,6 +563,15 @@ def construir_parser() -> argparse.ArgumentParser:
     sesion.add_argument("--id", default="", help="ID explícito")
     sesion.add_argument("--seco", action="store_true", help="Muestra la entrada sin escribirla")
     sesion.set_defaults(func=comando_sesion)
+
+    verificar = sub.add_parser(
+        "verificar", help="Comprueba el mensaje de un commit (lo usa commit-msg)"
+    )
+    verificar.add_argument(
+        "--mensaje", required=True, help="Archivo con el mensaje; commit-msg lo pasa como $1"
+    )
+    verificar.add_argument("--json", action="store_true", help="Salida legible por máquina")
+    verificar.set_defaults(func=comando_verificar)
 
     return parser
 

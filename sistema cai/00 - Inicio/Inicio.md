@@ -20,6 +20,7 @@ related:
 
 **Estado actual:** 📋 Documentación en construcción · **Código:** no iniciado
 **Versión del plan:** 1.0 · **Última actualización:** 2026-10-22
+**Calidad de las herramientas:** ✅ P0 cerrados el 2026-10-22; quedan T2–T4 — ver [[05.08 Revision de Calidad de las Herramientas de Gobernanza]]
 
 ---
 
@@ -89,6 +90,8 @@ related:
 - [[05.05 Estrategia de Pruebas]]
 - [[05.06 Guía de Contribución]]
 - [[05.07 Gobierno del Cambio]] — las reglas de control, escalabilidad y legibilidad
+- [[05.08 Revision de Calidad de las Herramientas de Gobernanza]] — diagnóstico SOLID, DRY, KISS, YAGNI y Clean Code de las herramientas
+- [[05.09 Herramientas de Gobernanza]] — contrato, códigos de salida y matriz de pruebas
 
 ### `06 - Versionado y Rollback`
 - [[06.01 Estrategia de Versionado]]
@@ -135,7 +138,7 @@ related:
 - [[ADR-0005 Release por Symlink]] · [[ADR-0006 Cifrado de Notas Clínicas]]
 - [[ADR-0007 Cuentas Familiares Compartidas]] · [[ADR-0008 Stack Laravel Filament PostgreSQL]]
 - [[ADR-0009 Sin Redis en el MVP]] · [[ADR-0010 Backups Externos Cifrados]] · [[04.08 Rotacion de Claves y Envelope Encryption]] · [[06.08 Verificacion de Restauracion]]
-- [[ADR-0017 Registro y Trazabilidad de Cambios]]
+- [[ADR-0017 Registro y Trazabilidad de Cambios]] · [[ADR-0018 Verificación de Trazabilidad en un Punto]] (aceptado)
 
 ### `12 - Registro de Cambios`
 - [[12.01 Política de Cambios y Trazabilidad]] — qué se puede cambiar, quién lo autoriza y cómo se revierte

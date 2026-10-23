@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+# commit-msg hook — Proyecto CAI
+# Verifica el mensaje REAL del commit: Git lo entrega en el archivo $1.
+#
+# Comprueba que el mensaje cite una entrada REG-AAAA-NNN existente en 12.02 y
+# que los archivos eliminados estén justificados en esa entrada.
+#
+# Ver: sistema cai/05 - Proceso de Desarrollo/05.09 Herramientas de Gobernanza.md §5
+#      sistema cai/11 - Decisiones ADR/ADR-0018 Verificación de Trazabilidad en un Punto.md
+
+set -e
+
+if [ -z "${1:-}" ]; then
+  echo "ERROR: commit-msg requiere el archivo del mensaje (\$1)" >&2
+  exit 2
+fi
+
+RAIZ="$(git rev-parse --show-toplevel)"
+
+exec "$RAIZ/bin/cai-log.py" verificar --mensaje "$1"

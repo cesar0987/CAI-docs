@@ -40,6 +40,7 @@ related:
 | [[ADR-0009 Sin Redis en el MVP]] | Sin Redis en el MVP | Aceptado | Responsable técnico | Infraestructura |
 | [[ADR-0010 Backups Externos Cifrados]] | Backups externos cifrados | Aceptado | Dirección | Continuidad |
 | [[ADR-0017 Registro y Trazabilidad de Cambios]] | Registro y trazabilidad de cambios | Aceptado | Responsable técnico | Proceso |
+| [[ADR-0018 Verificación de Trazabilidad en un Punto]] | Verificación de trazabilidad en un punto | Aceptado | Responsable técnico (2026-10-22) | Herramientas |
 
 ---
 
@@ -80,6 +81,15 @@ related:
 - [[ADR-0010 Backups Externos Cifrados]] — **por qué** hay una copia externa
   cifrada, con la clave en manos de otra persona.
 
+### 2.6 Gobernanza y herramientas
+
+- [[ADR-0017 Registro y Trazabilidad de Cambios]] — **por qué** la bóveda está
+  versionada, el registro es de solo agregar y la IA se atribuye.
+- [[ADR-0018 Verificación de Trazabilidad en un Punto]] — **por qué** la
+  política se verifica en un solo comando invocado por los hooks de Git, en
+  lugar de tres implementaciones divergentes. Estado: aceptado e implementado
+  en T1 (2026-10-22).
+
 ---
 
 ## 3. Decisiones pendientes de ADR
@@ -97,6 +107,12 @@ cada una genera un ADR nuevo:
 | **P7** | Alcance del cifrado fuera de `clinical_notes.content` | ADR-0015 Alcance del Cifrado | F5 |
 | **P10** | Aceptación del modelo sin Redis | (cubierto por [[ADR-0009 Sin Redis en el MVP]]) | — |
 | **P16** | Política de contraseñas y acceso al servidor | ADR-0016 Política de Contraseñas | F8 |
+
+**ADR en borrador:** ninguno. [[ADR-0018 Verificación de Trazabilidad en un Punto]]
+pasó a `aceptado` el 2026-10-22: no dependía de una respuesta de Dirección,
+sino de la aprobación del Responsable técnico. Nace del diagnóstico de
+[[05.08 Revision de Calidad de las Herramientas de Gobernanza]] y su contrato
+está en [[05.09 Herramientas de Gobernanza]].
 
 ---
 
@@ -172,4 +188,6 @@ dependencia):
 | [[12.01 Política de Cambios y Trazabilidad]] | Concreta [[ADR-0017 Registro y Trazabilidad de Cambios]] |
 | [[12.02 Registro de Cambios]] | Evidencia [[ADR-0017 Registro y Trazabilidad de Cambios]] |
 | [[05.07 Gobierno del Cambio]] | Concreta [[ADR-0017 Registro y Trazabilidad de Cambios]] |
+| [[05.08 Revision de Calidad de las Herramientas de Gobernanza]] | Diagnóstico que origina [[ADR-0018 Verificación de Trazabilidad en un Punto]] |
+| [[05.09 Herramientas de Gobernanza]] | Contrato de implementación de [[ADR-0018 Verificación de Trazabilidad en un Punto]] |
 | [[08.12 Backlog Maestro]] | Recoge las consecuencias pendientes de cada ADR |

@@ -39,6 +39,10 @@
 /coverage/
 /.php-cs-fixer.cache
 /.phpstan.cache
+__pycache__/
+*.pyc
+/.mypy_cache/
+/.pytest_cache/
 
 # ---------------------------------------------------------------------------
 # Estado local del registro de cambios (generado por el plugin)

@@ -52,13 +52,13 @@
 
 ```bash
 # Registrar un cambio
-bin/cai-log cambio --tipo edición --severidad N2 \
+bin/cai-log.py cambio --tipo edición --severidad N2 \
   --motivo "..." --archivos "ruta1.md,ruta2.md" \
   --rastreo "ADR-0001" --verificacion "bin/validate-vault.py -> 0 errores" \
   --autor "Cesar Benitez" --modelo "opencode/big-pickle#default"
 
 # Registrar/cerrar sesión
-bin/cai-log sesion --operador "Cesar Benitez" \
+bin/cai-log.py sesion --operador "Cesar Benitez" \
   --modelo "opencode/big-pickle#default" --agente build \
   --objetivo "..." --area "12 - Registro de Cambios" --resultado completado
 
@@ -111,7 +111,9 @@ Sin el identificador exacto, la atribución se pierde para siempre.
 
 ## 5. Antes de hacer commit
 
-El hook `pre-commit` **bloquea** el commit si falta el registro. Para que pase:
+El hook `commit-msg` **bloquea** el commit si el mensaje no cita una entrada
+`REG` que exista en 12.02, o si elimina archivos sin justificar. `pre-commit`
+valida la bóveda cuando el commit la toca. Para que pase:
 
 ```text
 ☐ La entrada REG-… de este cambio ya está escrita en 12.02
@@ -123,11 +125,17 @@ El hook `pre-commit` **bloquea** el commit si falta el registro. Para que pase:
 ☐ El mensaje del commit es convencional y cita los IDs
 ```
 
+Para comprobar el mensaje antes de commitear:
+
+```bash
+bin/cai-log.py verificar --mensaje .git/COMMIT_EDITMSG
+```
+
 ### 5.1 Cómo se escribe el registro rápido
 
 ```bash
 # Entrada de cambio
-bin/cai-log cambio \
+bin/cai-log.py cambio \
   --tipo "edición" \
   --severidad N2 \
   --motivo "Corregir el wikilink roto del ADR-0006 en 03.05" \
@@ -136,7 +144,7 @@ bin/cai-log cambio \
   --verificacion "bin/validate-vault.py -> 0 errores"
 
 # Cierre de sesión
-bin/cai-log sesion \
+bin/cai-log.py sesion \
   --operador "Cesar Benitez" \
   --modelo "opencode/big-pickle" \
   --variante "default" \
@@ -170,8 +178,10 @@ cambio con `--tipo deprecación`.
 | Comando | Qué hace |
 |---|---|
 | `bin/validate-vault.py` | Valida la bóveda: wikilinks, frontmatter, tablas, caracteres. Devuelve código de salida 1 si hay errores |
-| `bin/cai-log --help` | Registra un cambio o una sesión en el log |
-| `bin/install-hooks.sh` | Instala el hook `pre-commit` (se ejecuta una vez) |
+| `bin/cai-log.py --help` | Registra un cambio o una sesión en el log |
+| `bin/cai-log.py verificar --mensaje ARCHIVO` | Comprueba un mensaje de commit contra el registro (lo usa el hook `commit-msg`) |
+| `python3 -m unittest discover -s bin/tests` | Ejecuta las pruebas de la política y de los hooks |
+| `bin/install-hooks.sh` | Instala los hooks `pre-commit` y `commit-msg` (se ejecuta una vez) |
 | `git log --oneline` | Historial de cambios |
 | `git show doc@v0.1.0` | La bóveda tal como estaba en la línea base |
 
@@ -214,6 +224,9 @@ cambio con `--tipo deprecación`.
 
 - `sistema cai/12 - Registro de Cambios/12.01 Política de Cambios y Trazabilidad.md` — la política completa
 - `sistema cai/05 - Proceso de Desarrollo/05.07 Gobierno del Cambio.md` — las reglas de gobierno
+- `sistema cai/05 - Proceso de Desarrollo/05.08 Revision de Calidad de las Herramientas de Gobernanza.md` — diagnóstico de las herramientas y plan P0/P1/P2
+- `sistema cai/05 - Proceso de Desarrollo/05.09 Herramientas de Gobernanza.md` — contrato, códigos de salida y matriz de pruebas
 - `sistema cai/11 - Decisiones ADR/Índice de ADRs.md` — decisiones tomadas y pendientes
+- `sistema cai/11 - Decisiones ADR/ADR-0018 Verificación de Trazabilidad en un Punto.md` — decisión aceptada (2026-10-22) e implementada en T1
 - `sistema cai/08 - Plan de Trabajo/08.12 Backlog Maestro.md` — el trabajo pendiente
 - `sistema cai/00 - Inicio/00.04 Plan Maestro de Implementación.md` — el plan completo
