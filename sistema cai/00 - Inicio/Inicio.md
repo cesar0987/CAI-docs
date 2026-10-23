@@ -20,7 +20,7 @@ related:
 
 **Estado actual:** 📋 Documentación en construcción · **Código:** no iniciado
 **Versión del plan:** 1.0 · **Última actualización:** 2026-10-22
-**Calidad de las herramientas:** ✅ P0 cerrados y T3 aplicada el 2026-10-22; queda T4 — ver [[05.08 Revision de Calidad de las Herramientas de Gobernanza]]
+**Calidad de las herramientas:** ✅ T0–T4 aplicadas el 2026-10-22; CI, pruebas y contrato vigentes — ver [[05.08 Revision de Calidad de las Herramientas de Gobernanza]]
 
 ---
 

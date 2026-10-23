@@ -75,7 +75,7 @@ bin/validate-vault.py
 | 1 | **Declarar el alcance** antes de empezar: qué archivos exactos se van a tocar | Queda en la entrada `REG-…` |
 | 2 | **Clasificar la severidad** del cambio (N1 a N4) | N3 y N4 requieren ADR o aprobación previa |
 | 3 | **Citar el origen** del cambio con un ID: `RF-nnn`, `RN-nnn`, `RNF-nnn`, `ADR-nnnn`, `P-nn`, `S-nn` | Campo "Rastreo" de la entrada |
-| 4 | **Verificar** antes de cerrar, con un comando y su resultado | `bin/validate-vault.py`, pruebas del paquete, Deptrac |
+| 4 | **Verificar** antes de cerrar, con un comando y su resultado | `bin/validate-vault.py`, `python3 -m unittest discover -s bin/tests`; Deptrac, en el repositorio de producto |
 | 5 | **Registrar** el cambio en `12 - Registro de Cambios/12.02 Registro de Cambios.md` | Entrada `REG-AAAA-NNN` |
 | 6 | **Registrar** la sesión en `12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md`, con el **modelo exacto** | `proveedor/modelo#variante` |
 | 7 | **Actualizar los índices** afectados en el mismo commit | `Inicio.md`, `Índice de ADRs.md`, la sección 3 de `12.02` |
@@ -180,7 +180,7 @@ cambio con `--tipo deprecación`.
 | `bin/validate-vault.py` | Valida la bóveda: wikilinks, frontmatter, tablas, caracteres. Devuelve código de salida 1 si hay errores |
 | `bin/cai-log.py --help` | Registra un cambio o una sesión en el log |
 | `bin/cai-log.py verificar --mensaje ARCHIVO` | Comprueba un mensaje de commit contra el registro (lo usa el hook `commit-msg`) |
-| `python3 -m unittest discover -s bin/tests` | Ejecuta las pruebas de la política y de los hooks |
+| `python3 -m unittest discover -s bin/tests` | Ejecuta las pruebas de las herramientas (validador, registro, política y hooks) |
 | `bin/install-hooks.sh` | Instala los hooks `pre-commit` y `commit-msg` (se ejecuta una vez) |
 | `git log --oneline` | Historial de cambios |
 | `git show doc@v0.1.0` | La bóveda tal como estaba en la línea base |
