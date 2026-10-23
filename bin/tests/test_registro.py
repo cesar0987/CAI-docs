@@ -135,6 +135,29 @@ class Modelo(unittest.TestCase):
             )
 
 
+class Recorte(unittest.TestCase):
+    modulo: Any
+
+    @classmethod
+    def setUpClass(cls):
+        cls.modulo = cargar_modulo()
+
+    def test_texto_que_cabe_no_cambia(self):
+        self.assertEqual(self.modulo.recortar("texto corto", 90), "texto corto")
+
+    def test_corta_en_el_ultimo_espacio_antes_del_limite(self):
+        texto = "a" * 80 + " " + "b" * 80
+        self.assertEqual(self.modulo.recortar(texto, 90), "a" * 80 + "…")
+
+    def test_palabra_unica_mas_larga_que_el_limite(self):
+        self.assertEqual(self.modulo.recortar("x" * 100, 90), "x" * 90 + "…")
+
+    def test_marca_el_corte_sin_dejar_espacio_antes(self):
+        resultado = self.modulo.recortar("una frase larga que no entra en el límite", 20)
+        self.assertTrue(resultado.endswith("…"))
+        self.assertNotIn(" …", resultado)
+
+
 class EscrituraAtomica(unittest.TestCase):
     modulo: Any
 
@@ -276,6 +299,33 @@ class ComandoCambio(unittest.TestCase):
             self.assertIn(f"## {esperado}", resultado)
             self.assertIn(f"| {esperado} |", resultado)
             self.assertIn(f"updated: {self.modulo.hoy()}", resultado)
+
+    def test_motivo_largo_se_recorta_por_palabra_en_encabezado_e_indice(self):
+        with tempfile.TemporaryDirectory() as carpeta:
+            registro = Path(carpeta) / "12.02 Registro de Cambios.md"
+            bitacora = Path(carpeta) / "12.03 Bitácora de Sesiones con IA.md"
+            registro.write_text(REGISTRO_FICTICIO, encoding="utf-8")
+            bitacora.write_text("# Bitácora\n", encoding="utf-8")
+
+            motivo = "palabra " * 20
+            argumentos = self.argumentos()
+            argumentos[argumentos.index("--motivo") + 1] = motivo
+
+            with (
+                mock.patch.object(self.modulo, "REGISTRO", str(registro)),
+                mock.patch.object(self.modulo, "BITACORA", str(bitacora)),
+                mock.patch.dict(os.environ, {"CAI_SESION": ""}, clear=False),
+                redirect_stdout(io.StringIO()),
+            ):
+                codigo = self.modulo.main(argumentos)
+
+            esperado = f"REG-{ANIO}-003"
+            recortado = self.modulo.recortar(motivo, 90)
+            resultado = registro.read_text(encoding="utf-8")
+            self.assertEqual(codigo, 0)
+            self.assertIn(f"## {esperado} · {recortado}", resultado)
+            self.assertIn(f"| {recortado} |", resultado)
+            self.assertTrue(recortado.endswith("…"))
 
     def test_sesion_inexistente_no_escribe_nada(self):
         with tempfile.TemporaryDirectory() as carpeta:

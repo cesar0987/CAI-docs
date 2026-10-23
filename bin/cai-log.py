@@ -130,6 +130,17 @@ def celda(valor: str) -> str:
     return limpio.replace("|", "\\|")
 
 
+def recortar(texto: str, limite: int) -> str:
+    """Recorta en un límite de palabra y marca el corte con una elipsis."""
+    limpio = " ".join(texto.split())
+    if len(limpio) <= limite:
+        return limpio
+    corte = limpio.rfind(" ", 0, limite + 1)
+    if corte <= 0:
+        corte = limite
+    return limpio[:corte].rstrip() + "…"
+
+
 def validar_catalogo(valor: str, validos: set[str], etiqueta: str) -> None:
     if valor not in validos:
         fallar(f"{etiqueta} inválido «{valor}». Válidos: {', '.join(sorted(validos))}")
@@ -478,7 +489,7 @@ def comando_cambio(args: argparse.Namespace) -> int:
     if not archivos:
         fallar("falta --archivos: declarar el alcance antes de empezar (AGENTS.md §2.1)")
 
-    resumen = args.resumen or args.motivo.split(".")[0][:90]
+    resumen = args.resumen or recortar(args.motivo.split(".")[0], 90)
 
     bloque = f"""
 ---
@@ -534,7 +545,7 @@ def comando_sesion(args: argparse.Namespace) -> int:
     bloque = f"""
 ---
 
-## {identificador} · {args.titulo or args.objetivo[:80]}
+## {identificador} · {args.titulo or recortar(args.objetivo, 80)}
 
 | Campo | Valor |
 |---|---|
