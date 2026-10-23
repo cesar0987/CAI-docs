@@ -18,7 +18,7 @@ reglas de trabajo y las herramientas que las hacen cumplir.
 | `bin/cai-log.py` | Registro de cambios (12.02), bitácora de sesiones (12.03) y verificación del mensaje de commit |
 | `bin/hooks/pre-commit` | Hook que valida la bóveda cuando el commit la toca |
 | `bin/hooks/commit-msg` | Hook que exige un `REG` existente en el mensaje real del commit |
-| `bin/tests/` | Pruebas de la política y de los hooks (biblioteca estándar) |
+| `bin/tests/` | Pruebas de la política, del registro y de los hooks (biblioteca estándar) |
 | `bin/install-hooks.sh` | Instalador de los hooks en `.git/hooks/` |
 | `.opencode/` | Configuración del agente y plugin de atribución |
 | `.cai/` | Estado local de sesiones (no versionado) |
@@ -75,15 +75,16 @@ bin/cai-log.py verificar --mensaje .git/COMMIT_EDITMSG
 python3 -m unittest discover -s bin/tests -v
 ```
 
-Cubren la política de trazabilidad y los hooks de Git (21 casos al 2026-10-22).
-No requieren dependencias externas.
+Cubren la política de trazabilidad, el registro y los hooks de Git (35 casos al
+2026-10-22). No requieren dependencias externas.
 
 ## Estado de calidad de las herramientas
 
-La revisión de calidad está cerrada en su primera tanda (T1, 2026-10-22): los
-tres hallazgos P0 se corrigieron. El plugin ya no escribe en la bóveda, el
-mensaje del commit se verifica donde existe (`commit-msg`) y hay pruebas
-automatizadas. Quedan las tandas T2–T4 (calidad interna, CI y documentación):
+La revisión de calidad está cerrada en sus dos primeras tandas (T1 y T2,
+2026-10-22): los tres hallazgos P0 se corrigieron y el registro se escribe una
+sola vez de forma atómica. El plugin ya no escribe en la bóveda, el mensaje del
+commit se verifica donde existe (`commit-msg`) y hay pruebas automatizadas.
+Quedan las tandas T3–T4 (constantes y validaciones, CI y documentación):
 
 - Diagnóstico y plan: `sistema cai/05 - Proceso de Desarrollo/05.08 Revision de Calidad de las Herramientas de Gobernanza.md`
 - Contrato y matriz de pruebas: `sistema cai/05 - Proceso de Desarrollo/05.09 Herramientas de Gobernanza.md`

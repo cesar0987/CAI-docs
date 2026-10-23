@@ -141,6 +141,15 @@ def quitar_bloques_de_codigo(texto: str) -> str:
     return texto
 
 
+def destinos_wikilink(texto: str) -> Iterable[tuple[int, str]]:
+    """Genera (línea, destino) por cada wikilink, sin alias ni ancla."""
+    for numero, linea in enumerate(texto.split("\n"), start=1):
+        for coincidencia in re.finditer(r"\[\[([^\]]+)\]\]", linea):
+            destino = coincidencia.group(1).split("|")[0].split("#")[0].strip()
+            if destino:
+                yield numero, destino
+
+
 def leer_frontmatter(texto: str) -> tuple[dict[str, str], int]:
     """Devuelve (campos, número de líneas del bloque)."""
     if not texto.startswith("---"):
@@ -213,23 +222,16 @@ def comprobar_frontmatter(ruta: str, texto: str, res: Resultado) -> None:
         )
 
 
-def comprobar_wikilinks(ruta: str, texto: str, indice: dict[str, str], res: Resultado) -> None:
-    limpio = quitar_bloques_de_codigo(texto)
-    for numero, linea in enumerate(limpio.split("\n"), start=1):
-        for coincidencia in re.finditer(r"\[\[([^\]]+)\]\]", linea):
-            destino = coincidencia.group(1).split("|")[0].split("#")[0].strip()
-            if not destino:
-                continue
-            res.wikilinks += 1
-            clave = normalizar(destino)
-            if clave in indice:
-                continue
-            res.add(ruta, numero, "wikilinks", f"Enlace roto: [[{destino}]]", "error")
+def comprobar_wikilinks(ruta: str, limpio: str, indice: dict[str, str], res: Resultado) -> None:
+    for numero, destino in destinos_wikilink(limpio):
+        res.wikilinks += 1
+        if normalizar(destino) in indice:
+            continue
+        res.add(ruta, numero, "wikilinks", f"Enlace roto: [[{destino}]]", "error")
 
 
-def comprobar_tablas(ruta: str, texto: str, res: Resultado) -> None:
+def comprobar_tablas(ruta: str, limpio: str, res: Resultado) -> None:
     """Valida que todas las filas de una tabla tengan las mismas columnas."""
-    limpio = quitar_bloques_de_codigo(texto)
     lineas = limpio.split("\n")
 
     def celdas(linea: str) -> int:
@@ -278,7 +280,7 @@ def _validar_bloque(ruta, bloque, inicio, celdas, res: Resultado) -> None:
             )
 
 
-def comprobar_caracteres(ruta: str, texto: str, res: Resultado) -> None:
+def comprobar_caracteres(ruta: str, texto: str, limpio: str, res: Resultado) -> None:
     for numero, linea in enumerate(texto.split("\n"), start=1):
         for caracter in linea:
             codigo = ord(caracter)
@@ -293,7 +295,7 @@ def comprobar_caracteres(ruta: str, texto: str, res: Resultado) -> None:
                     )
                     break
 
-    for numero, linea in enumerate(quitar_bloques_de_codigo(texto).split("\n"), start=1):
+    for numero, linea in enumerate(limpio.split("\n"), start=1):
         for coincidencia in SOSPECHOSAS.finditer(CITAS.sub(" ", linea)):
             res.add(
                 ruta,
@@ -305,7 +307,10 @@ def comprobar_caracteres(ruta: str, texto: str, res: Resultado) -> None:
 
 
 def comprobar_indices(rutas: list[str], textos: dict[str, str], res: Resultado) -> None:
-    """Aviso si un documento no está enlazado desde ningún índice."""
+    """Aviso si un documento no está enlazado desde ningún índice.
+
+    `textos` ya viene sin bloques de código: los enlaces se cuentan una vez.
+    """
     indices = {
         "inicio",
         "indice de adrs",
@@ -313,9 +318,8 @@ def comprobar_indices(rutas: list[str], textos: dict[str, str], res: Resultado) 
         "12.03 bitacora de sesiones con ia",
     }
     referenciados: set[str] = set()
-    for texto in textos.values():
-        for coincidencia in re.finditer(r"\[\[([^\]]+)\]\]", texto):
-            destino = coincidencia.group(1).split("|")[0].split("#")[0].strip()
+    for limpio in textos.values():
+        for _, destino in destinos_wikilink(limpio):
             referenciados.add(normalizar(destino))
 
     for ruta in rutas:
@@ -323,9 +327,7 @@ def comprobar_indices(rutas: list[str], textos: dict[str, str], res: Resultado) 
         clave = normalizar(nombre)
         if clave in indices:
             continue
-        if nombre.startswith(("Plantilla -", "ADR-")) and clave not in referenciados:
-            res.add(ruta, 1, "indices", "No está referenciado desde ningún índice", "aviso")
-        elif clave not in referenciados:
+        if clave not in referenciados:
             res.add(ruta, 1, "indices", "No está referenciado desde ningún índice", "aviso")
 
 
@@ -360,18 +362,19 @@ def main(argv: list[str]) -> int:
         indice.setdefault(normalizar(sin_prefijo(nombre)), ruta)
 
     res = Resultado(documentos=len(rutas))
-    textos: dict[str, str] = {}
+    limpios: dict[str, str] = {}
 
     for ruta in rutas:
         with open(ruta, encoding="utf-8", errors="replace") as manejador:
             texto = manejador.read()
-        textos[ruta] = texto
+        limpio = quitar_bloques_de_codigo(texto)
+        limpios[ruta] = limpio
         comprobar_frontmatter(ruta, texto, res)
-        comprobar_wikilinks(ruta, texto, indice, res)
-        comprobar_tablas(ruta, texto, res)
-        comprobar_caracteres(ruta, texto, res)
+        comprobar_wikilinks(ruta, limpio, indice, res)
+        comprobar_tablas(ruta, limpio, res)
+        comprobar_caracteres(ruta, texto, limpio, res)
 
-    comprobar_indices(rutas, textos, res)
+    comprobar_indices(rutas, limpios, res)
 
     if args.json:
         print(

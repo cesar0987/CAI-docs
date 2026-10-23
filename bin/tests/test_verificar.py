@@ -174,7 +174,7 @@ class InsercionSegura(unittest.TestCase):
         self.assertEqual(nuevo.replace(bloque, "", 1), self.TEXTO)
 
     def test_falla_si_falta_el_marcador(self):
-        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+        with redirect_stderr(io.StringIO()), self.assertRaises(self.modulo.CaiError):
             self.modulo.insertar_entrada("sin marcadores", "SES-ENTRIES", "x")
 
 

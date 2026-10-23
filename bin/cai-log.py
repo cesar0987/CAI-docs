@@ -84,9 +84,14 @@ SIN_DATO = "—"
 # ---------------------------------------------------------------------------
 
 
+class CaiError(Exception):
+    """Error de uso o de política. `main()` lo informa y devuelve el código."""
+
+    codigo = 1
+
+
 def fallar(mensaje: str) -> NoReturn:
-    print(f"ERROR: {mensaje}", file=sys.stderr)
-    sys.exit(1)
+    raise CaiError(mensaje)
 
 
 def leer(ruta: str) -> str:
@@ -97,14 +102,45 @@ def leer(ruta: str) -> str:
 
 
 def escribir(ruta: str, texto: str) -> None:
-    with open(ruta, "w", encoding="utf-8", newline="\n") as manejador:
-        manejador.write(texto)
+    """Escribe el archivo completo una sola vez, con reemplazo atómico."""
+    temporal = f"{ruta}.tmp-{os.getpid()}"
+    try:
+        with open(temporal, "w", encoding="utf-8", newline="\n") as manejador:
+            manejador.write(texto)
+            manejador.flush()
+            os.fsync(manejador.fileno())
+        os.replace(temporal, ruta)
+    except OSError:
+        if os.path.exists(temporal):
+            os.remove(temporal)
+        raise
 
 
 def celda(valor: str) -> str:
     """Prepara un valor para una celda de tabla Markdown."""
     limpio = " ".join(str(valor).split())
     return limpio.replace("|", "\\|")
+
+
+def validar_catalogo(valor: str, validos: set[str], etiqueta: str) -> None:
+    if valor not in validos:
+        fallar(f"{etiqueta} inválido «{valor}». Válidos: {', '.join(sorted(validos))}")
+
+
+def formatear_archivos(valor: str) -> str:
+    """Convierte una lista separada por comas en rutas entre acentos graves."""
+    return ", ".join(f"`{ruta.strip()}`" for ruta in (valor or "").split(",") if ruta.strip())
+
+
+def formatear_modelo(proveedor: str, nombre: str, variante: str) -> str:
+    """Forma canónica de atribución: proveedor/modelo#variante."""
+    return f"{proveedor}/{nombre}" + (f"#{variante}" if variante else "")
+
+
+def modelo_en_celda(proveedor: str, nombre: str, variante: str) -> str:
+    """Atribución para una celda: `proveedor/modelo` (variante `x`)."""
+    base = f"`{proveedor}/{nombre}`"
+    return base + (f" (variante `{variante}`)" if variante else "")
 
 
 def ahora() -> str:
@@ -128,6 +164,10 @@ def resolver_modelo(modelo: str | None, variante: str | None) -> tuple[str, str,
     Acepta `opencode/big-pickle#default`, `opencode/big-pickle` o solo
     `big-pickle` (en ese caso se rechaza: sin proveedor la atribución es
     incompleta, ver 12.03 §3.1).
+
+    La variante puede venir en el `#` del modelo, en `--variante` o en
+    `CAI_VARIANTE`. Si vienen dos y no coinciden, se rechaza: adivinar cuál
+    vale sería una atribución ambigua.
     """
     crudo = modelo or os.environ.get("CAI_MODELO", "")
     if not crudo:
@@ -136,15 +176,24 @@ def resolver_modelo(modelo: str | None, variante: str | None) -> tuple[str, str,
             "o definí CAI_MODELO. Sin modelo no hay atribución (AGENTS.md §3)."
         )
     crudo = crudo.strip()
+    del_entorno = os.environ.get("CAI_VARIANTE") or ""
+    explicita = (variante or del_entorno).strip()
+    del_modelo = ""
     if "#" in crudo:
-        crudo, variante = crudo.split("#", 1)
+        crudo, del_modelo = crudo.split("#", 1)
+        del_modelo = del_modelo.strip()
+    if explicita and del_modelo and explicita != del_modelo:
+        fallar(
+            f"la variante «{explicita}» no coincide con «{del_modelo}» del modelo: "
+            "dejá una sola para no atribuir mal la sesión"
+        )
     if "/" not in crudo:
         fallar(
             f"el modelo «{crudo}» no incluye el proveedor. "
             "La forma canónica es proveedor/modelo#variante (12.03 §3.1)."
         )
     proveedor, nombre = crudo.split("/", 1)
-    return proveedor.strip(), nombre.strip(), (variante or "").strip()
+    return proveedor.strip(), nombre.strip(), explicita or del_modelo
 
 
 def siguiente_id(texto: str, prefijo: str) -> str:
@@ -155,7 +204,10 @@ def siguiente_id(texto: str, prefijo: str) -> str:
     ejemplo del documento no debe consumir números.
     """
     anio = datetime.now().astimezone().year
-    patron = re.compile(r"^\s*(?:##|\|)\s*" + re.escape(prefijo) + r"-" + str(anio) + r"-(\d{3})")
+    patron = re.compile(
+        r"^[ \t]*(?:##|\|)[ \t]*" + re.escape(prefijo) + r"-" + str(anio) + r"-(\d{3})\b",
+        re.MULTILINE,
+    )
     numeros = [int(n) for n in patron.findall(texto)]
     siguiente = (max(numeros) + 1) if numeros else 1
     return f"{prefijo}-{anio}-{siguiente:03d}"
@@ -185,6 +237,37 @@ def insertar_en_indice(texto: str, seccion: str, fila: str) -> str:
             corte = desde + len("\n".join(lineas[: posicion + 2])) + 1
             return texto[:corte] + fila + "\n" + texto[corte:]
     fallar(f"la sección «{seccion}» no tiene tabla de índice")
+
+
+def preparar_id(texto: str, prefijo: str, pedido: str) -> str:
+    """Devuelve el ID a usar y rechaza uno que ya exista en el documento."""
+    identificador = pedido or siguiente_id(texto, prefijo)
+    if re.search(rf"^##[ \t]*{re.escape(identificador)}\b", texto, re.MULTILINE):
+        fallar(f"el ID {identificador} ya existe: el documento es de solo agregar")
+    return identificador
+
+
+def _registrar(
+    ruta: str,
+    texto: str,
+    marcador: str,
+    seccion: str,
+    bloque: str,
+    fila: str,
+    seco: bool,
+) -> bool:
+    """Aplica las dos inserciones en memoria y escribe el documento una sola vez.
+
+    Devuelve `False` en modo seco (no escribe nada).
+    """
+    if seco:
+        print(bloque)
+        print(fila)
+        return False
+    texto = insertar_entrada(texto, marcador, bloque)
+    texto = insertar_en_indice(texto, seccion, fila)
+    escribir(ruta, actualizar_fecha(texto))
+    return True
 
 
 def verificacion(valor: str) -> str:
@@ -349,12 +432,9 @@ def actualizar_fecha(texto: str) -> str:
 
 
 def comando_cambio(args: argparse.Namespace) -> int:
-    if args.tipo not in TIPOS:
-        fallar(f"tipo inválido «{args.tipo}». Válidos: {', '.join(sorted(TIPOS))}")
-    if args.severidad not in SEVERIDADES:
-        fallar(f"severidad inválida «{args.severidad}». Válidas: {', '.join(sorted(SEVERIDADES))}")
-    if args.estado not in ESTADOS:
-        fallar(f"estado inválido «{args.estado}». Válidos: {', '.join(sorted(ESTADOS))}")
+    validar_catalogo(args.tipo, TIPOS, "tipo")
+    validar_catalogo(args.severidad, SEVERIDADES, "severidad")
+    validar_catalogo(args.estado, ESTADOS, "estado")
     if len(args.motivo.split()) < 10:
         fallar(
             "el motivo tiene menos de 10 palabras: no explica nada. "
@@ -372,15 +452,12 @@ def comando_cambio(args: argparse.Namespace) -> int:
         fallar("falta el autor. Usá --autor o definí CAI_OPERADOR.")
 
     texto = leer(REGISTRO)
-    identificador = args.id or siguiente_id(texto, "REG")
-    if re.search(rf"^##\s*{re.escape(identificador)}\b", texto, re.M):
-        fallar(f"el ID {identificador} ya existe: el registro es de solo agregar")
+    identificador = preparar_id(texto, "REG", args.id)
     sesion = args.sesion or os.environ.get("CAI_SESION", "") or SIN_DATO
     if sesion != SIN_DATO and sesion not in leer(BITACORA):
         fallar(f"la sesión {sesion} no existe en 12.03. Registrala primero con `cai-log.py sesion`")
 
-    modelo = f"`{proveedor}/{nombre}`" + (f" (variante `{variante}`)" if variante else "")
-    archivos = ", ".join(f"`{a.strip()}`" for a in args.archivos.split(",") if a.strip())
+    archivos = formatear_archivos(args.archivos)
     if not archivos:
         fallar("falta --archivos: declarar el alcance antes de empezar (AGENTS.md §2.1)")
 
@@ -396,7 +473,7 @@ def comando_cambio(args: argparse.Namespace) -> int:
 | **Fecha** | {ahora()} |
 | **Tipo** | {args.tipo} |
 | **Severidad** | {args.severidad} |
-| **Autor** | {celda(autor)} · IA {modelo} |
+| **Autor** | {celda(autor)} · IA {modelo_en_celda(proveedor, nombre, variante)} |
 | **Sesión** | {sesion} |
 | **Motivo** | {celda(args.motivo)} |
 | **Archivos** | {archivos} |
@@ -411,23 +488,13 @@ def comando_cambio(args: argparse.Namespace) -> int:
         f"| {celda(resumen)} | {sesion} |"
     )
 
-    if args.seco:
-        print(bloque)
-        print(fila)
+    if not _registrar(
+        REGISTRO, texto, "REG-ENTRIES", "## 3. Índice de entradas", bloque, fila, args.seco
+    ):
         return 0
 
-    texto = insertar_entrada(texto, "REG-ENTRIES", bloque)
-    texto = actualizar_fecha(texto)
-    escribir(REGISTRO, texto)
-
-    # El índice se actualiza en un segundo paso para que un fallo no deje
-    # la entrada escrita sin su fila.
-    texto = leer(REGISTRO)
-    texto = insertar_en_indice(texto, "## 3. Índice de entradas", fila)
-    escribir(REGISTRO, texto)
-
     print(f"OK  {identificador} registrado en 12.02")
-    print(f"    modelo: {proveedor}/{nombre}" + (f"#{variante}" if variante else ""))
+    print(f"    modelo: {formatear_modelo(proveedor, nombre, variante)}")
     print("    siguiente paso: verificá y commiteá con el ID en el mensaje")
     return 0
 
@@ -438,20 +505,16 @@ def comando_cambio(args: argparse.Namespace) -> int:
 
 
 def comando_sesion(args: argparse.Namespace) -> int:
-    if args.resultado not in RESULTADOS:
-        fallar(f"resultado inválido «{args.resultado}». Válidos: {', '.join(sorted(RESULTADOS))}")
+    validar_catalogo(args.resultado, RESULTADOS, "resultado")
     if not args.operador:
         fallar("falta --operador: la sesión se atribuye a una persona concreta")
 
     proveedor, nombre, variante = resolver_modelo(args.modelo, args.variante)
 
     texto = leer(BITACORA)
-    identificador = args.id or siguiente_id(texto, "SES")
-    if re.search(rf"^##\s*{re.escape(identificador)}\b", texto, re.M):
-        fallar(f"el ID {identificador} ya existe: la bitácora es de solo agregar")
-
+    identificador = preparar_id(texto, "SES", args.id)
     fin = args.fin or ahora()
-    archivos = ", ".join(f"`{a.strip()}`" for a in (args.archivos or "").split(",") if a.strip())
+    archivos = formatear_archivos(args.archivos)
 
     bloque = f"""
 ---
@@ -476,27 +539,19 @@ def comando_sesion(args: argparse.Namespace) -> int:
 | **Pendiente** | {celda(args.pendiente or SIN_DATO)} |
 """
 
-    modelo_completo = f"{proveedor}/{nombre}" + (f"#{variante}" if variante else "")
+    modelo_completo = formatear_modelo(proveedor, nombre, variante)
     fila = (
         f"| {identificador} | {hoy()} | {celda(args.operador)} | {celda(args.herramienta)} "
         f"| `{modelo_completo}` | {args.resultado} | {celda(args.entradas or SIN_DATO)} |"
     )
 
-    if args.seco:
-        print(bloque)
-        print(fila)
+    if not _registrar(
+        BITACORA, texto, "SES-ENTRIES", "## 4. Índice de sesiones", bloque, fila, args.seco
+    ):
         return 0
 
-    texto = insertar_entrada(texto, "SES-ENTRIES", bloque)
-    texto = actualizar_fecha(texto)
-    escribir(BITACORA, texto)
-
-    texto = leer(BITACORA)
-    texto = insertar_en_indice(texto, "## 4. Índice de sesiones", fila)
-    escribir(BITACORA, texto)
-
     print(f"OK  {identificador} registrada en 12.03")
-    print(f"    modelo: {proveedor}/{nombre}" + (f"#{variante}" if variante else ""))
+    print(f"    modelo: {modelo_completo}")
     print(f"    exportá CAI_SESION={identificador} para que los cambios se enlacen solos")
     return 0
 
@@ -578,7 +633,14 @@ def construir_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str]) -> int:
     args = construir_parser().parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except CaiError as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return error.codigo
+    except OSError as error:
+        print(f"ERROR: no se pudo escribir el documento: {error}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":
