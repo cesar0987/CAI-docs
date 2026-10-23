@@ -39,6 +39,7 @@
 | 8 | **Romper una frontera entre paquetes** | El aislamiento lo impone la herramienta (Deptrac), no la disciplina |
 | 9 | **Reescribir entradas de registro** ya escritas | El registro es de solo agregar. Las correcciones se **agregan** |
 | 10 | **Avanzar de fase sin el gate firmado** | El gate de `08 - Plan de Trabajo` define qué se puede empezar |
+| 11 | **Que la IA ejecute `git push`** | El `push` lo hace el operador manualmente; la IA avisa cuando hay commits locales pendientes de publicar |
 
 > [!tip] Evolucionar, no romper
 > **Prefiere hacer cambios incrementales y compatibles hacia atrás.** Añade antes que
@@ -81,6 +82,7 @@ bin/validate-vault.py
 | 7 | **Actualizar los índices** afectados en el mismo commit | `Inicio.md`, `Índice de ADRs.md`, la sección 3 de `12.02` |
 | 8 | **Anotar lo pendiente** | Campo "Pendiente" de la entrada |
 | 9 | **Commit con mensaje convencional** | Ver `05.02 Commits, Ramas y Versionado SemVer` |
+| 10 | **Avisar cuando hay commits locales pendientes de publicar** | El operador ejecuta el `push`; la IA no lo hace |
 
 ---
 

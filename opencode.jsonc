@@ -27,14 +27,13 @@
     { "action": "shell", "resource": "find * -exec rm*", "effect": "deny" },
 
     // ===================================================================
-    // 2. LA HISTORIA NO SE REESCRIBE
-    // Los tags deben seguir apuntando a lo que dicen apuntar.
-    // Ver: ADR-0004 y 12.04 Versionado de la Documentación
+    // 2. EL PUSH ES MANUAL; LA HISTORIA NO SE REESCRIBE
+    // El operador publica los commits. La IA no ejecuta git push en ninguna
+    // rama. Los tags deben seguir apuntando a lo que dicen apuntar.
+    // Ver: ADR-0004, GC-19 y 12.04 Versionado de la Documentación
     // ===================================================================
     { "action": "shell", "resource": "git reset --hard*", "effect": "deny" },
-    { "action": "shell", "resource": "git push --force*", "effect": "deny" },
-    { "action": "shell", "resource": "git push -f*", "effect": "deny" },
-    { "action": "shell", "resource": "git push*main*", "effect": "deny" },
+    { "action": "shell", "resource": "git push*", "effect": "deny" },
     { "action": "shell", "resource": "git filter-branch*", "effect": "deny" },
     { "action": "shell", "resource": "git checkout -- *", "effect": "ask" },
     { "action": "shell", "resource": "git restore*", "effect": "ask" },
