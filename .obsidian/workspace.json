@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "sistema cai/11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+                "file": "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ADR-0009 Sin Redis en el MVP"
+              "title": "12.02 Registro de Cambios"
             }
           }
         ]
@@ -99,7 +99,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "sistema cai/11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+                "file": "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -118,7 +118,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "sistema cai/11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+                "file": "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
@@ -161,7 +161,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "sistema cai/11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+                "file": "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -190,7 +190,9 @@
   },
   "active": "020340d56805634f",
   "lastOpenFiles": [
+    "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md",
     "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md",
+    "sistema cai/11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
     "DESIGN.md",
     "sistema cai/06 - Versionado y Rollback/06.03 Expand-Contract.md",
     "sistema cai/12 - Registro de Cambios/12.01 Política de Cambios y Trazabilidad.md"
