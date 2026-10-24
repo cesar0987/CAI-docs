@@ -134,6 +134,16 @@ class Modelo(unittest.TestCase):
                 ("opencode", "big-pickle", "entorno"),
             )
 
+    def test_modelo_sin_proveedor_se_rechaza(self):
+        for modelo in ("Claude", "OpenCode", "IA", "big-pickle", "opencode"):
+            with self.subTest(modelo=modelo):
+                with self.assertRaises(self.modulo.CaiError):
+                    self.modulo.resolver_modelo(modelo, None)
+
+    def test_modelo_con_espacios_se_rechaza(self):
+        with self.assertRaises(self.modulo.CaiError):
+            self.modulo.resolver_modelo("opencode / big-pickle", None)
+
 
 class Recorte(unittest.TestCase):
     modulo: Any

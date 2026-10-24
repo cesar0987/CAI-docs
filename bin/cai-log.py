@@ -80,6 +80,9 @@ ESTADOS = {"aplicado", "fallido", "revertido", "pendiente de revisión"}
 SIN_DATO = "—"
 MIN_PALABRAS_MOTIVO = 10
 PATRON_ID = re.compile(r"^(?P<prefijo>REG|SES)-(?P<anio>\d{4})-(?P<numero>\d{3})$")
+PATRON_MODELO = re.compile(
+    r"^[a-zA-Z0-9][a-zA-Z0-9._-]*/[a-zA-Z0-9][a-zA-Z0-9._-]*(?:#[a-zA-Z0-9][a-zA-Z0-9._-]*)?$"
+)
 MARCADOR_ENTRADAS = {"REG": "REG-ENTRIES", "SES": "SES-ENTRIES"}
 MARCADOR_INDICE = {
     "REG": "<!-- REG-INDEX:START -->",
@@ -107,6 +110,24 @@ def leer(ruta: str) -> str:
         fallar(f"no existe el archivo: {ruta}")
     with open(ruta, encoding="utf-8") as manejador:
         return manejador.read()
+
+
+def validar_formato_modelo(crudo: str) -> None:
+    """Exige que el modelo venga como proveedor/modelo#variante."""
+    if not crudo or not crudo.strip():
+        fallar("falta el modelo de IA. La forma válida es proveedor/modelo#variante")
+    limpio = crudo.strip()
+    if " " in limpio or "\t" in limpio:
+        fallar(
+            "el modelo debe ser un identificador canónico sin espacios: "
+            "proveedor/modelo#variante"
+        )
+    if not PATRON_MODELO.fullmatch(limpio):
+        fallar(
+            f"el modelo «{limpio}» no cumple el formato canónico. "
+            "Usá proveedor/modelo#variante, por ejemplo: opencode/big-pickle#default o "
+            "anthropic/claude-sonnet-4-5"
+        )
 
 
 def escribir(ruta: str, texto: str) -> None:
@@ -181,12 +202,8 @@ def resolver_modelo(modelo: str | None, variante: str | None) -> tuple[str, str,
     Devuelve (proveedor, modelo, variante) a partir de las opciones o del entorno.
 
     Acepta `opencode/big-pickle#default`, `opencode/big-pickle` o solo
-    `big-pickle` (en ese caso se rechaza: sin proveedor la atribución es
-    incompleta, ver 12.03 §3.1).
-
-    La variante puede venir en el `#` del modelo, en `--variante` o en
-    `CAI_VARIANTE`. Si vienen dos y no coinciden, se rechaza: adivinar cuál
-    vale sería una atribución ambigua.
+    `anthropic/claude-sonnet-4-5` (sin variante). Rechaza valores libres como
+    `Claude`, `OpenCode`, `IA`, `big-pickle` o `opencode`.
     """
     crudo = modelo or os.environ.get("CAI_MODELO", "")
     if not crudo:
@@ -201,6 +218,10 @@ def resolver_modelo(modelo: str | None, variante: str | None) -> tuple[str, str,
     if "#" in crudo:
         crudo, del_modelo = crudo.split("#", 1)
         del_modelo = del_modelo.strip()
+    if del_modelo:
+        validar_formato_modelo(f"{crudo}#{del_modelo}")
+    else:
+        validar_formato_modelo(crudo)
     if explicita and del_modelo and explicita != del_modelo:
         fallar(
             f"la variante «{explicita}» no coincide con «{del_modelo}» del modelo: "
@@ -212,6 +233,11 @@ def resolver_modelo(modelo: str | None, variante: str | None) -> tuple[str, str,
             "La forma canónica es proveedor/modelo#variante (12.03 §3.1)."
         )
     proveedor, nombre = crudo.split("/", 1)
+    if not proveedor.strip() or not nombre.strip():
+        fallar(
+            "el modelo debe incluir proveedor y nombre; ejemplo correcto: "
+            "anthropic/claude-sonnet-4-5"
+        )
     return proveedor.strip(), nombre.strip(), explicita or del_modelo
 
 
@@ -492,6 +518,8 @@ def comando_cambio(args: argparse.Namespace) -> int:
     resumen = args.resumen or recortar(args.motivo.split(".")[0], 90)
 
     bloque = f"""
+<!-- REG-{identificador} -->
+
 ---
 
 ## {identificador} · {args.titulo or resumen}
@@ -543,6 +571,8 @@ def comando_sesion(args: argparse.Namespace) -> int:
     archivos = formatear_archivos(args.archivos)
 
     bloque = f"""
+<!-- SES-{identificador} -->
+
 ---
 
 ## {identificador} · {args.titulo or recortar(args.objetivo, 80)}

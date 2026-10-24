@@ -249,3 +249,73 @@ Partí de la tarea y leé solo lo necesario. Ampliá si hay dependencias o contr
 - `sistema cai/11 - Decisiones ADR/ADR-0018 Verificación de Trazabilidad en un Punto.md` — decisión aceptada (2026-10-22) e implementada en T1
 - `sistema cai/08 - Plan de Trabajo/08.12 Backlog Maestro.md` — el trabajo pendiente
 - `sistema cai/00 - Inicio/00.04 Plan Maestro de Implementación.md` — el plan completo
+
+## 1.2 Patrón operativo IA-safe
+
+Todo agente que toque este repositorio debe seguir este patrón antes de cerrar trabajo:
+
+1. **Pre-vuelo**
+   - Leer `AGENTS.md` y el documento objetivo.
+   - Definir alcance exacto: qué se toca y qué no.
+   - Enumerar archivos y fuentes de verdad que se van a usar.
+   - Declarar qué validación corresponde a la tarea.
+
+2. **Antislop**
+   - No inventar números, métricas, resultados, versiones ni autoría.
+   - No poner “AI polish” ni adornos que no aporten contenido útil.
+   - No ampliar el problema por gusto ni tocar módulos ajenos al alcance.
+
+3. **Revisión en segunda pasada**
+   - Revisar corrección, seguridad, alcance, mantenibilidad y trazabilidad.
+   - Preguntar si cada afirmación tiene evidencia real.
+   - Dejar anotado lo que no se pudo verificar.
+
+4. **Cierre con evidencia**
+   - La sesión solo se cierra si hay validación ejecutada y registrada.
+   - El modelo real, la verificación y las entradas del registro deben coincidir.
+   - Si algo queda incompleto, se declara como pendiente y no como completado.
+
+Este patrón es la traducción operativa del diseño de `DESIGN.md` y debe quedar en la práctica de todas las sesiones.
+
+## 1.3 Plantilla de inicio de sesión IA
+
+Usá esta plantilla cada vez que una IA o agente comience a trabajar en este repositorio. La idea es que la sesión quede acotada desde el principio y no se cierre sin evidencia.
+
+```text
+TAREA:
+- Objetivo real:
+- Alcance exacto:
+- Qué NO se toca:
+
+FUENTES DE VERDAD:
+- Documento objetivo:
+- Archivos relevantes:
+- ADR / RN / RF / RNF que aplican:
+
+AGENTE / MODELO:
+- Operador:
+- Herramienta:
+- Proveedor:
+- Modelo exacto:
+- Variante:
+- Agente / modo:
+
+VALIDACIÓN:
+- Comando esperado:
+- Resultado esperado:
+- Qué evidencia haría aceptar el cierre:
+
+RIESGOS / ANTI-SLOP:
+- Inventos posibles:
+- Cambios fuera de alcance:
+- Suposiciones sin fuente:
+
+CIERRE:
+- Estado: completado / parcial / fallido
+- Archivos tocados:
+- Verificación ejecutada:
+- Entradas de registro / sesión:
+- Pendiente:
+```
+
+Regla operativa: si no se puede responder con evidencia, la tarea no se cierra como completada. La plantilla es el primer chequeo de honestidad del agente.

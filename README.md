@@ -120,3 +120,85 @@ La verificación local obligatoria antes de commitear es:
 bin/validate-vault.py --quiet
 python3 -m unittest discover -s bin/tests
 ```
+
+---
+
+## Patrón operativo para IA
+
+Este repositorio no acepta trabajo de IA sin evidencia. Todo agente debe seguir este ciclo:
+
+1. `pre-vuelo`: leer `AGENTS.md`, definir alcance y archivos exactos.
+2. `anti-slop`: no inventar hechos, no ampliar el problema ni mejorar estilísticamente sin necesidad.
+3. `validación`: ejecutar la comprobación relevante antes de cerrar.
+4. `cierre`: registrar la sesión, el cambio y el resultado real.
+
+El documento operativo de referencia es `DESIGN.md`.
+
+---
+
+## Plantilla de inicio de sesión para IA
+
+Usá esta plantilla cada vez que una IA o agente comience a trabajar en este repositorio:
+
+```text
+TAREA:
+- Objetivo real:
+- Alcance exacto:
+- Qué NO se toca:
+
+FUENTES DE VERDAD:
+- Documento objetivo:
+- Archivos relevantes:
+- ADR / RN / RF / RNF que aplican:
+
+AGENTE / MODELO:
+- Operador:
+- Herramienta:
+- Proveedor:
+- Modelo exacto:
+- Variante:
+- Agente / modo:
+
+VALIDACIÓN:
+- Comando esperado:
+- Resultado esperado:
+- Qué evidencia haría aceptar el cierre:
+
+RIESGOS / ANTI-SLOP:
+- Inventos posibles:
+- Cambios fuera de alcance:
+- Suposiciones sin fuente:
+
+CIERRE:
+- Estado: completado / parcial / fallido
+- Archivos tocados:
+- Verificación ejecutada:
+- Entradas de registro / sesión:
+- Pendiente:
+```
+
+Si no se puede responder con evidencia, la tarea no se cierra como completada.
+
+### Versión mínima (para uso diario)
+
+```text
+Antes de empezar:
+- leer AGENTS.md y el documento objetivo
+- definir alcance y no tocar módulos ajenos
+- registrar operador, herramienta, proveedor y modelo exacto
+- decidir la validación antes de cerrar
+
+Durante la sesión:
+- no inventar hechos ni resultados
+- no ampliar el problema por gusto
+- dejar todo en evidencia
+
+Al cerrar:
+- ejecutar la validación real
+- registrar sesión y entrada de cambio
+- no cerrar si falta evidencia
+- si hay algo pendiente, dejarlo anotado
+```
+
+> [!important] Push manual
+> La IA no ejecuta `git push`. El operador lo hace manualmente cuando la rama está lista.

@@ -184,6 +184,52 @@ class Validador(unittest.TestCase):
         self.assertEqual(codigo, 2)
         self.assertIn("no existe la carpeta", error)
 
+    def test_sesion_sin_marcador_se_detecta(self) -> None:
+        contenido = """---
+title: Bitácora de Sesiones con IA
+type: registro
+status: vigente
+tags: [cai, bitacora, ia]
+owner: Responsable técnico
+updated: 2026-10-23
+---
+
+# Bitácora de Sesiones con IA
+
+<!-- SES-ENTRIES:START -->
+
+## SES-2026-001 · Sesión sin marcador
+
+| Campo | Valor |
+|---|---|
+| **Objetivo** | Demo |
+
+<!-- SES-ENTRIES:END -->
+"""
+        datos = self.validar(contenido, nombre="12.03 Bitácora de Sesiones con IA.md")
+        self.assertIn("no tiene su marcador", " ".join(self.mensajes(datos, "sesiones")))
+
+    def test_registro_sin_marcador_se_detecta(self) -> None:
+        contenido = """---
+title: Registro de Cambios
+updated: 2026-10-23
+---
+
+# Registro de Cambios
+
+<!-- REG-ENTRIES:START -->
+
+## REG-2026-001 · Entrada sin marcador
+
+| Campo | Valor |
+|---|---|
+| **Motivo** | Demo |
+
+<!-- REG-ENTRIES:END -->
+"""
+        datos = self.validar(contenido, nombre="12.02 Registro de Cambios.md")
+        self.assertIn("no tiene su marcador", " ".join(self.mensajes(datos, "identificadores")))
+
 
 if __name__ == "__main__":
     unittest.main()

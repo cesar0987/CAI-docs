@@ -337,6 +337,57 @@ def comprobar_indices(rutas: list[str], textos: dict[str, str], res: Resultado) 
             res.add(ruta, PRIMERA_LINEA, "indices", "No está referenciado desde ningún índice", AVISO)
 
 
+def comprobar_bitacora_sesiones(ruta: str, texto: str, res: Resultado) -> None:
+    """Exige que cada sesión de la bitácora lleve su marcador de identificación."""
+    nombre = os.path.basename(ruta).lower()
+    if "bitacora" not in nombre and "12.03" not in nombre:
+        return
+
+    _comprobar_marcadores_por_prefijo(ruta, texto, res, "SES", "sesiones")
+
+
+def comprobar_registro_cambios(ruta: str, texto: str, res: Resultado) -> None:
+    """Exige que cada entrada del registro lleve su marcador de identificación."""
+    nombre = os.path.basename(ruta).lower()
+    if "registro de cambios" not in nombre and "12.02" not in nombre:
+        return
+
+    _comprobar_marcadores_por_prefijo(ruta, texto, res, "REG", "identificadores")
+
+
+def _comprobar_marcadores_por_prefijo(
+    ruta: str, texto: str, res: Resultado, prefijo: str, regla: str
+) -> None:
+    inicio = f"<!-- {prefijo}-ENTRIES:START -->"
+    fin = f"<!-- {prefijo}-ENTRIES:END -->"
+    if inicio not in texto or fin not in texto:
+        res.add(
+            ruta,
+            PRIMERA_LINEA,
+            regla,
+            f"Falta el rango de entradas entre `{inicio}` y `{fin}`",
+            ERROR,
+        )
+        return
+
+    lineas = texto.splitlines()
+    for numero, linea in enumerate(lineas, start=1):
+        coincidencia = re.match(rf"^##\s*({prefijo}-\d{{4}}-\d{{3}})\b", linea)
+        if not coincidencia:
+            continue
+        entrada_id = coincidencia.group(1)
+        marcador = f"<!-- {entrada_id} -->"
+        ventana = "\n".join(lineas[max(0, numero - 25): numero])
+        if marcador not in ventana:
+            res.add(
+                ruta,
+                numero,
+                regla,
+                f"La entrada {entrada_id} no tiene su marcador `{marcador}` justo antes del encabezado",
+                ERROR,
+            )
+
+
 # ---------------------------------------------------------------------------
 # Programa principal
 # ---------------------------------------------------------------------------
@@ -379,6 +430,8 @@ def main(argv: list[str]) -> int:
         comprobar_wikilinks(ruta, limpio, indice, res)
         comprobar_tablas(ruta, limpio, res)
         comprobar_caracteres(ruta, texto, limpio, res)
+        comprobar_bitacora_sesiones(ruta, texto, res)
+        comprobar_registro_cambios(ruta, texto, res)
 
     comprobar_indices(rutas, limpios, res)
 
