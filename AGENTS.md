@@ -229,6 +229,7 @@ cambio con `--tipo deprecación`.
 | `10 - Operación` | Runbook, checklists, incidentes, recuperación ante desastres |
 | `11 - Decisiones ADR` | Índice y ADR accepted |
 | `12 - Registro de Cambios` | Política, registro de cambios, bitácora de IA, versionado documental |
+| `skills/` | Skills del proyecto: `cai-verificar-gate-de-fase` verifica los gates de fase en el repo de producto. Son herramientas de trabajo, no contenido de la bóveda: `bin/validate-vault.py` no las recorre |
 
 ## 8.1 Mapa por tarea (para agentes)
 

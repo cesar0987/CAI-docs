@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md",
+                "file": "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "12.03 Bitácora de Sesiones con IA"
+              "title": "12.02 Registro de Cambios"
             }
           }
         ]
@@ -190,21 +190,29 @@
   },
   "active": "020340d56805634f",
   "lastOpenFiles": [
-    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp-12672",
-    "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md.tmp-12655",
-    "sistema cai/12 - Registro de Cambios/12.01 Política de Cambios y Trazabilidad.md",
-    "sistema cai/12 - Registro de Cambios/sedQoBrpp",
-    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp-283838",
-    "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md.tmp-283806",
-    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md",
-    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp-282679",
-    "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md.tmp-282671",
-    "sistema cai/12 - Registro de Cambios/sedDr2QJf",
-    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp-264884",
-    "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md.tmp-264801",
+    "sistema cai/08 - Plan de Trabajo/08.12 Backlog Maestro.md.tmp.22380.1793138762549",
+    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp-25508",
     "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md",
-    "sistema cai/11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
+    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp.22380.1793138678914",
+    "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md.tmp.22380.1793138674057",
+    "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md.tmp.22380.1793138667723",
+    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp.22380.1793138661349",
+    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp.22380.1793138656899",
+    "sistema cai/12 - Registro de Cambios/12.03 Bitácora de Sesiones con IA.md.tmp.22380.1793138641432",
+    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp-25122",
+    "sistema cai/05 - Proceso de Desarrollo/05.09 Herramientas de Gobernanza.md.tmp.22380.1793138579656",
+    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md.tmp.22380.1793138571013",
     "DESIGN.md",
+    "AGENTS.md",
+    "skills/cai-verificar-gate-de-fase/references/verificaciones.md",
+    "skills/cai-verificar-gate-de-fase/SKILL.md",
+    "sistema cai/10 - Operación/10.03 Gestión de Incidentes.md",
+    "sistema cai/10 - Operación/10.02 Calendario de Checklists.md",
+    "README.md",
+    "CLAUDE.md",
+    "sistema cai/12 - Registro de Cambios/12.01 Política de Cambios y Trazabilidad.md",
+    "sistema cai/12 - Registro de Cambios/12.02 Registro de Cambios.md",
+    "sistema cai/11 - Decisiones ADR/ADR-0009 Sin Redis en el MVP.md",
     "sistema cai/06 - Versionado y Rollback/06.03 Expand-Contract.md"
   ]
 }
