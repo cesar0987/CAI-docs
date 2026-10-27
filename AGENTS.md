@@ -101,15 +101,25 @@ Sin el identificador exacto, la atribución se pierde para siempre.
 > [!danger] Ninguna sesión se registra sin modelo
 > El campo **no admite** `—`, `no declarado` ni `*(completar)*`. Si el agente no lo
 > conoce, en este orden:
-> 1. **Leer el identificador real** del registro del entorno. Qoder lo deja en
->    `~/.qoder/logs/sessions/<workspace>/<session-uuid>/segments/*.jsonl`, en los campos
->    `provider` y `model` de los eventos de hook.
-> 2. **Preguntar al operador** cuál es, y registrar lo que diga.
-> 3. **No escribir la sesión** hasta tenerlo. `bin/cai-log.py sesion` ya falla sin
->    `--modelo`; ese fallo es una barrera, no un obstáculo que sortear.
+> 1. **Buscar el identificador real** en lo que deja el entorno. En Qoder Desktop hay dos
+>    registros distintos y **no** dicen lo mismo:
+>    `~/.qoder/logs/sessions/<slug>/<session-uuid>/segments/*.jsonl` lleva `provider` y
+>    `model` en los eventos de hook (es el que sirve), mientras que el transcript
+>    `~/.qoder/projects/<slug>/<session-uuid>.jsonl` solo trae el alias interno
+>    (`qfmodel`), que **no** es un identificador de modelo.
+>    El registro de hooks no está garantizado: de 7 sesiones locales, 4 no lo tienen.
+> 2. **Preguntar al operador** cuál es, y registrar lo que diga. El operador lo ve en el
+>    selector de modelo del cliente.
+> 3. **No escribir la sesión** hasta tenerlo. `bin/cai-log.py sesion` y
+>    `bin/cai-log.py cambio` fallan sin `--modelo`; ese fallo es una barrera, no un
+>    obstáculo que sortear.
 >
 > Si una sesión quedó registrada con el campo incompleto, **no se reescribe**: se agrega
 > una entrada nueva que lo complete y apunte a la vieja.
+>
+> La barrera no depende de la buena voluntad: `bin/validate-vault.py` (regla
+> `atribución`) falla si el índice de la bitácora tiene una sesión sin entrada, o si una
+> entrada tiene el proveedor o el modelo vacíos. Ver `05.09` §3.2 y la matriz T-25 a T-29.
 
 ---
 

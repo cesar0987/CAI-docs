@@ -48,6 +48,18 @@ ESTADOS_VALIDOS = {"borrador", "vigente", "deprecated", "superseded"}
 # Los ADR usan sus propios estados (ver 00.01 §4 y Plantilla - ADR).
 ESTADOS_ADR = {"borrador", "aceptado", "revisado", "reemplazado", "descartado"}
 
+# Valores que no constituyen una atribución (AGENTS.md §3): la sesión no se registra así.
+CAMPOS_VACIOS_SESION = {
+    "",
+    "—",
+    "-",
+    "no declarado",
+    "no declarada",
+    "pendiente",
+    "*(completar)*",
+    "(completar)",
+}
+
 # Severidades y posición de los avisos que no dependen de una línea concreta.
 Severidad = Literal["error", "aviso"]
 ERROR: Severidad = "error"
@@ -344,6 +356,86 @@ def comprobar_bitacora_sesiones(ruta: str, texto: str, res: Resultado) -> None:
         return
 
     _comprobar_marcadores_por_prefijo(ruta, texto, res, "SES", "sesiones")
+    comprobar_atribucion_de_sesiones(ruta, texto, res)
+
+
+def comprobar_atribucion_de_sesiones(ruta: str, texto: str, res: Resultado) -> None:
+    """Cada sesión del índice tiene entrada, y cada entrada tiene proveedor y modelo.
+
+    Sin el identificador exacto la atribución se pierde para siempre (AGENTS.md §3), y una
+    sesión que solo existe como fila de tabla no es auditable. Por eso ambas cosas se
+    verifican aquí y no a ojo.
+    """
+    linea_de = lambda marca: next(
+        (i for i, l in enumerate(texto.splitlines()) if l.strip() == marca), None
+    )
+    inicio_indice = linea_de("<!-- SES-INDEX:START -->")
+    inicio_entradas = linea_de("<!-- SES-ENTRIES:START -->")
+    fin_entradas = linea_de("<!-- SES-ENTRIES:END -->")
+    if inicio_indice is None or inicio_entradas is None or fin_entradas is None:
+        res.add(
+            ruta,
+            PRIMERA_LINEA,
+            "atribución",
+            "Faltan los anclajes `SES-INDEX:START`, `SES-ENTRIES:START` o `SES-ENTRIES:END`",
+            ERROR,
+        )
+        return
+
+    lineas = texto.splitlines()
+    indice = re.findall(
+        r"^\|\s*(SES-\d{4}-\d{3})\s*\|", "\n".join(lineas[inicio_indice:inicio_entradas]), re.M
+    )
+    cuerpo = "\n".join(lineas[inicio_entradas:fin_entradas])
+    entradas = re.findall(r"^##\s+(SES-\d{4}-\d{3})\b", cuerpo, re.M)
+
+    faltantes = [sid for sid in indice if sid not in entradas]
+    if faltantes:
+        res.add(
+            ruta,
+            PRIMERA_LINEA,
+            "atribución",
+            "Sesiones en el índice sin entrada en el cuerpo: " + ", ".join(faltantes),
+            ERROR,
+        )
+    huerfanas = [sid for sid in entradas if sid not in indice]
+    if huerfanas:
+        res.add(
+            ruta,
+            PRIMERA_LINEA,
+            "atribución",
+            "Entradas de sesión sin fila en el índice: " + ", ".join(huerfanas),
+            ERROR,
+        )
+
+    posiciones = [
+        (numero, coincidencia.group(1))
+        for numero, linea in enumerate(lineas, start=1)
+        if (coincidencia := re.match(r"^##\s+(SES-\d{4}-\d{3})\b", linea))
+    ]
+    cortes = [numero for numero, _ in posiciones] + [len(lineas) + 1]
+    for (numero, sid), fin in zip(posiciones, cortes[1:]):
+        bloque = "\n".join(lineas[numero - 1 : fin])
+        for campo in ("Proveedor", "Modelo"):
+            coincidencia = re.search(rf"^\| \*\*{campo}\*\* \| (.*?) \|", bloque, re.M)
+            valor = (coincidencia.group(1).strip().strip("`") if coincidencia else "")
+            if not coincidencia:
+                res.add(
+                    ruta,
+                    numero,
+                    "atribución",
+                    f"La sesión {sid} no tiene el campo **{campo}**",
+                    ERROR,
+                )
+            elif valor in CAMPOS_VACIOS_SESION:
+                res.add(
+                    ruta,
+                    numero,
+                    "atribución",
+                    f"La sesión {sid} tiene **{campo}** como `{valor or '—'}`: "
+                    "el modelo se registra con `proveedor/modelo#variante` o se pregunta",
+                    ERROR,
+                )
 
 
 def comprobar_registro_cambios(ruta: str, texto: str, res: Resultado) -> None:

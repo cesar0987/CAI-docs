@@ -230,6 +230,100 @@ updated: 2026-10-23
         datos = self.validar(contenido, nombre="12.02 Registro de Cambios.md")
         self.assertIn("no tiene su marcador", " ".join(self.mensajes(datos, "identificadores")))
 
+    # T-25 a T-28 — atribución obligatoria de las sesiones (AGENTS.md §3)
+
+    def bitacora(self, filas: list[str], entradas: list[str]) -> str:
+        """Bóveda mínima de la bitácora: índice con `filas` y cuerpo con `entradas`."""
+        tabla = "\n".join(f"| {sid} | 2026-10-27 | Cesar Benitez | Qoder | `x/y` | completado | — |" for sid in filas)
+        cuerpo = "\n".join(entradas)
+        return documento(
+            "Bitácora de Sesiones con IA",
+            f"""# Bitácora de Sesiones con IA
+
+## 4. Índice de sesiones
+
+<!-- SES-INDEX:START -->
+
+| ID | Fecha | Operador | Herramienta | Modelo | Resultado | Entradas |
+|---|---|---|---|---|---|---|
+{tabla}
+
+<!-- SES-ENTRIES:START -->
+
+{cuerpo}
+<!-- SES-ENTRIES:END -->
+""",
+            type="registro",
+        )
+
+    def entrada(self, sid: str, proveedor: str, modelo: str) -> str:
+        return f"""<!-- {sid} -->
+## {sid} · Sesión de prueba
+
+| Campo | Valor |
+|---|---|
+| **Operador** | Cesar Benitez |
+| **Proveedor** | `{proveedor}` |
+| **Modelo** | `{modelo}` |
+| **Resultado** | completado |
+
+---
+"""
+
+    def test_sesion_sana_con_atribucion_no_distingue_problemas(self) -> None:
+        datos = self.validar(
+            self.bitacora(["SES-2026-001"], [self.entrada("SES-2026-001", "qoder", "Qwen3.8-Flash")]),
+            nombre="12.03 Bitácora de Sesiones con IA.md",
+        )
+        self.assertEqual(self.mensajes(datos, "atribución"), [])
+        self.assertEqual(datos["codigo"], 0)
+
+    def test_sesion_en_indice_sin_entrada_se_detecta(self) -> None:
+        datos = self.validar(
+            self.bitacora(
+                ["SES-2026-001", "SES-2026-002"],
+                [self.entrada("SES-2026-001", "qoder", "Qwen3.8-Flash")],
+            ),
+            nombre="12.03 Bitácora de Sesiones con IA.md",
+        )
+        mensajes = " ".join(self.mensajes(datos, "atribución"))
+        self.assertIn("sin entrada en el cuerpo", mensajes)
+        self.assertIn("SES-2026-002", mensajes)
+        self.assertEqual(datos["codigo"], 1)
+
+    def test_entrada_huerfana_sin_fila_en_el_indice_se_detecta(self) -> None:
+        datos = self.validar(
+            self.bitacora(
+                ["SES-2026-001"],
+                [
+                    self.entrada("SES-2026-001", "qoder", "Qwen3.8-Flash"),
+                    self.entrada("SES-2026-009", "qoder", "Qwen3.8-Flash"),
+                ],
+            ),
+            nombre="12.03 Bitácora de Sesiones con IA.md",
+        )
+        self.assertIn("sin fila en el índice", " ".join(self.mensajes(datos, "atribución")))
+
+    def test_modelo_con_placeholder_se_detecta(self) -> None:
+        for proveedor, modelo in (("qoder", "—"), ("no declarado", "Qwen3.8-Flash"), ("qoder", "*(completar)*")):
+            with self.subTest(modelo=modelo, proveedor=proveedor):
+                datos = self.validar(
+                    self.bitacora(["SES-2026-001"], [self.entrada("SES-2026-001", proveedor, modelo)]),
+                    nombre="12.03 Bitácora de Sesiones con IA.md",
+                )
+                mensajes = " ".join(self.mensajes(datos, "atribución"))
+                self.assertIn("el modelo se registra", mensajes)
+                self.assertEqual(datos["codigo"], 1)
+
+    def test_atribucion_sin_anclajes_se_detecta(self) -> None:
+        contenido = documento(
+            "Bitácora de Sesiones con IA",
+            "# Bitácora\n\n## SES-2026-001 · Sin estructura\n",
+            type="registro",
+        )
+        datos = self.validar(contenido, nombre="12.03 Bitácora de Sesiones con IA.md")
+        self.assertIn("Faltan los anclajes", " ".join(self.mensajes(datos, "atribución")))
+
 
 if __name__ == "__main__":
     unittest.main()
