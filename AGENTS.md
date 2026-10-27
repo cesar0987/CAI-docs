@@ -98,6 +98,19 @@ anthropic/claude-sonnet-4-5
 **No** vale "Big Pickle", "Claude", "un modelo", ni "el modelo por defecto".
 Sin el identificador exacto, la atribución se pierde para siempre.
 
+> [!danger] Ninguna sesión se registra sin modelo
+> El campo **no admite** `—`, `no declarado` ni `*(completar)*`. Si el agente no lo
+> conoce, en este orden:
+> 1. **Leer el identificador real** del registro del entorno. Qoder lo deja en
+>    `~/.qoder/logs/sessions/<workspace>/<session-uuid>/segments/*.jsonl`, en los campos
+>    `provider` y `model` de los eventos de hook.
+> 2. **Preguntar al operador** cuál es, y registrar lo que diga.
+> 3. **No escribir la sesión** hasta tenerlo. `bin/cai-log.py sesion` ya falla sin
+>    `--modelo`; ese fallo es una barrera, no un obstáculo que sortear.
+>
+> Si una sesión quedó registrada con el campo incompleto, **no se reescribe**: se agrega
+> una entrada nueva que lo complete y apunte a la vieja.
+
 ---
 
 ## 4. Severidad: qué puedo hacer solo
