@@ -1,6 +1,6 @@
 """Pruebas del registro de cambios y de la bitácora (T2 de 05.08).
 
-Cubren los casos T-11, T-18 y T-23 de la matriz de
+Cubren los casos T-11, T-18, T-23 y T-24 de la matriz de
 `sistema cai/05 - Proceso de Desarrollo/05.09 Herramientas de Gobernanza.md` §9:
 escritura única y atómica, rechazo sin tocar el archivo y correlativo correcto.
 
@@ -55,6 +55,25 @@ updated: 2026-10-01
 |---|---|---|---|---|---|
 | REG-{ANIO}-002 | 2026-10-01 | edición | N1 | segundo | — |
 | REG-{ANIO}-001 | 2026-10-01 | edición | N1 | primero | — |
+"""
+
+BITACORA_FICTICIA = f"""---
+title: Bitácora de Sesiones con IA
+updated: 2026-10-01
+---
+
+# Bitácora de prueba
+
+<!-- SES-ENTRIES:START -->
+<!-- SES-ENTRIES:END -->
+
+## 5. Índice de sesiones
+
+<!-- SES-INDEX:START -->
+
+| ID | Fecha | Operador | Herramienta | Modelo | Resultado | Registro |
+|---|---|---|---|---|---|---|
+<!-- SES-INDEX:END -->
 """
 
 
@@ -308,6 +327,8 @@ class ComandoCambio(unittest.TestCase):
             resultado = registro.read_text(encoding="utf-8")
             self.assertIn(f"## {esperado}", resultado)
             self.assertIn(f"| {esperado} |", resultado)
+            self.assertIn(f"<!-- {esperado} -->", resultado)
+            self.assertNotIn("REG-REG", resultado)
             self.assertIn(f"updated: {self.modulo.hoy()}", resultado)
 
     def test_motivo_largo_se_recorta_por_palabra_en_encabezado_e_indice(self):
@@ -355,6 +376,51 @@ class ComandoCambio(unittest.TestCase):
 
             self.assertEqual(codigo, 1)
             self.assertEqual(registro.read_text(encoding="utf-8"), REGISTRO_FICTICIO)
+
+
+class ComandoSesion(unittest.TestCase):
+    modulo: Any
+
+    @classmethod
+    def setUpClass(cls):
+        cls.modulo = cargar_modulo()
+
+    def argumentos(self) -> list[str]:
+        return [
+            "sesion",
+            "--operador",
+            "Prueba",
+            "--objetivo",
+            "Registrar una sesión de prueba para comprobar el ancla de la entrada",
+            "--area",
+            "12 - Registro de Cambios",
+            "--modelo",
+            "opencode/big-pickle#default",
+            "--verificacion",
+            "unittest -> OK",
+        ]
+
+    def test_entrada_lleva_ancla_con_el_id_completo(self):
+        with tempfile.TemporaryDirectory() as carpeta:
+            registro = Path(carpeta) / "12.02 Registro de Cambios.md"
+            bitacora = Path(carpeta) / "12.03 Bitácora de Sesiones con IA.md"
+            registro.write_text(REGISTRO_FICTICIO, encoding="utf-8")
+            bitacora.write_text(BITACORA_FICTICIA, encoding="utf-8")
+
+            with (
+                mock.patch.object(self.modulo, "REGISTRO", str(registro)),
+                mock.patch.object(self.modulo, "BITACORA", str(bitacora)),
+                redirect_stdout(io.StringIO()),
+            ):
+                codigo = self.modulo.main(self.argumentos())
+
+            esperado = f"SES-{ANIO}-001"
+            resultado = bitacora.read_text(encoding="utf-8")
+            self.assertEqual(codigo, 0)
+            self.assertIn(f"## {esperado}", resultado)
+            self.assertIn(f"<!-- {esperado} -->", resultado)
+            self.assertNotIn("SES-SES", resultado)
+            self.assertIn(f"| {esperado} |", resultado)
 
 
 class ErroresDePolitica(unittest.TestCase):

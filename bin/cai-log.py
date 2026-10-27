@@ -518,7 +518,7 @@ def comando_cambio(args: argparse.Namespace) -> int:
     resumen = args.resumen or recortar(args.motivo.split(".")[0], 90)
 
     bloque = f"""
-<!-- REG-{identificador} -->
+<!-- {identificador} -->
 
 ---
 
@@ -571,7 +571,7 @@ def comando_sesion(args: argparse.Namespace) -> int:
     archivos = formatear_archivos(args.archivos)
 
     bloque = f"""
-<!-- SES-{identificador} -->
+<!-- {identificador} -->
 
 ---
 
