@@ -115,6 +115,7 @@ related:
 - [[07.05 Configuración de PostgreSQL]]
 - [[07.06 Red, HTTPS y VPN]]
 - [[07.07 Monitoreo y Mantenimiento]]
+- [[07.08 Relevamiento del Servidor del Centro]]
 
 ### `08 - Plan de Trabajo`
 - [[08.01 Hoja de Ruta]] — las 10 fases y sus gates
@@ -154,6 +155,7 @@ related:
 
 ### `99 - Plantillas`
 - [[Plantilla - Documento]] · [[Plantilla - ADR]] · [[Plantilla - Fase del Plan]] · [[Plantilla - Requisito Funcional]]
+- [[Plantilla - Solicitud de Autorización de Intervención en Servidor]] · [[Plantilla - Inventario de Servidor]] · [[Plantilla - Informe de Relevamiento de Servidor]]
 
 ---
 
