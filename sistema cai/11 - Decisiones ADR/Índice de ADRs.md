@@ -4,7 +4,7 @@ type: moc
 status: vigente
 tags: [cai, adr, indice, decisiones, moc]
 owner: Responsable técnico
-updated: 2026-10-22
+updated: 2026-11-23
 related:
   - "[[00.01 Convenciones de la Vault]]"
   - "[[00.04 Plan Maestro de Implementación]]"
@@ -41,6 +41,7 @@ related:
 | [[ADR-0010 Backups Externos Cifrados]] | Backups externos cifrados | Aceptado | Dirección | Continuidad |
 | [[ADR-0017 Registro y Trazabilidad de Cambios]] | Registro y trazabilidad de cambios | Aceptado | Responsable técnico | Proceso |
 | [[ADR-0018 Verificación de Trazabilidad en un Punto]] | Verificación de trazabilidad en un punto | Aceptado | Responsable técnico (2026-10-22) | Herramientas |
+| [[ADR-0020 Dígito de Control del Código de Alumno]] | Dígito de control del código de alumno | Aceptado | Responsable técnico (2026-11-23) | Alumnos / importación |
 
 ---
 
@@ -73,6 +74,8 @@ related:
 
 - [[ADR-0007 Cuentas Familiares Compartidas]] — **por qué** el cobro es por
   alumno con imputación de pagos a nivel de familia.
+- [[ADR-0020 Dígito de Control del Código de Alumno]] — **por qué** el código
+  `ALU-AAAA-NNNN-C` lleva un dígito Luhn y cómo lo valida el importador.
 
 ### 2.5 Infraestructura y continuidad
 
